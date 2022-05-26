@@ -101,6 +101,7 @@ func (m *manager) shouldUpdate(conn *networkgraph.NetworkConnIndicator, updateTS
 		compareTime := updateTS
 		if compareTime == 0 {
 			compareTime = timestamp.Now()
+			log.Infof("Flow with nil last update for deployment %s", entity.ID)
 		}
 
 		// If the last time the flow was seen is nil, then updateTS will be 0 and thus
