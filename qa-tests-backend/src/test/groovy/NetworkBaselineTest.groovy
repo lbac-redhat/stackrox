@@ -310,19 +310,18 @@ class NetworkBaselineTest extends BaseSpecification {
 
         // Now we need to give sensor time to propagate the flows.  So we look up the client baseline
         // until it shows up with a peer of the server baseline.
-        baselinedClientBaseline = evaluateWithRetry(30, 5) {
-            def baseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
-            def now = System.currentTimeSeconds()
+        serverBaseline = evaluateWithRetry(30, 5) {
+            def baseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
             if (baseline.getPeersCount() == 0) {
                 throw new RuntimeException(
-                    "No peers in baseline for deployment ${baselinedClientDeploymentID} yet. Baseline is ${baseline}"
+                    "No peers in baseline for deployment ${serverDeploymentID} yet. Baseline is ${baseline}"
                 )
             }
             return baseline
         }
 
         // Now re-retrieve the server baseline to use in validation
-        serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
+        baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
 
         log.info "Server Baseline: ${serverBaseline}"
         log.info "Client Baseline: ${baselinedClientBaseline}"
