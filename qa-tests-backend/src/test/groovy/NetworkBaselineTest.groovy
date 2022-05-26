@@ -7,6 +7,7 @@ import services.NetworkBaselineService
 import spock.lang.Ignore
 import spock.lang.Retry
 import spock.lang.Unroll
+import spock.lang.Ignore
 import util.NetworkGraphUtil
 
 @Retry(count = 0)
@@ -132,6 +133,7 @@ class NetworkBaselineTest extends BaseSpecification {
     }
 
     @Unroll
+    @Ignore
     @Category(NetworkBaseline)
     def "Verify network baseline functionality"() {
         when:
@@ -283,7 +285,7 @@ class NetworkBaselineTest extends BaseSpecification {
     @Category(NetworkBaseline)
     def "Verify user get for non-existent baseline"() {
         when:
-        "Create initial set of deployments, wait for baseline to populate"
+        "Create initial set of deployments, wait for them to deploy"
         def beforeDeploymentCreate = System.currentTimeSeconds()
         batchCreate([USER_DEP, BASELINED_USER_CLIENT_DEP])
         def justAfterDeploymentCreate = System.currentTimeSeconds()
