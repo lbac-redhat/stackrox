@@ -306,8 +306,8 @@ class NetworkBaselineTest extends BaseSpecification {
 
         assert NetworkGraphUtil.checkForEdge(baselinedClientDeploymentID, serverDeploymentID, null, 180)
 
-        // Now we need to give sensor time to propagate the flows.  So we look up the client baseline
-        // until it shows up with a peer of the server baseline.
+        // Now we need to give sensor time to propagate the flows.  So we look up the server baseline
+        // until it shows up with a peer of the client baseline.
         serverBaseline = evaluateWithRetry(30, 5) {
             def baseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
             if (baseline.getPeersCount() == 0) {
@@ -318,7 +318,7 @@ class NetworkBaselineTest extends BaseSpecification {
             return baseline
         }
 
-        // Now re-retrieve the server baseline to use in validation
+        // Now re-retrieve the client baseline to use in validation
         baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
 
         log.info "Server Baseline: ${serverBaseline}"
