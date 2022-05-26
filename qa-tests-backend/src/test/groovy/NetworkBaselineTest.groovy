@@ -7,7 +7,6 @@ import services.NetworkBaselineService
 import spock.lang.Ignore
 import spock.lang.Retry
 import spock.lang.Unroll
-import spock.lang.Ignore
 import util.NetworkGraphUtil
 
 @Retry(count = 0)
@@ -133,7 +132,6 @@ class NetworkBaselineTest extends BaseSpecification {
     }
 
     @Unroll
-    @Ignore
     @Category(NetworkBaseline)
     def "Verify network baseline functionality"() {
         when:
