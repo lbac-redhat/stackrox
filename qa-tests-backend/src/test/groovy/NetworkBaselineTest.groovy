@@ -307,7 +307,7 @@ class NetworkBaselineTest extends BaseSpecification {
             180)
 
         // Let the client baseline come out of observation
-        sleep (EXPECTED_BASELINE_DURATION_SECONDS + CLOCK_SKEW_ALLOWANCE_SECONDS) * 1000
+        sleep EXPECTED_BASELINE_DURATION_SECONDS * 1000
 
         // Get the client baseline
         def baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
