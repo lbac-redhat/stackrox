@@ -4,7 +4,6 @@ import io.stackrox.proto.storage.NetworkFlowOuterClass
 import objects.Deployment
 import org.junit.experimental.categories.Category
 import services.NetworkBaselineService
-import spock.lang.Ignore
 import spock.lang.Retry
 import spock.lang.Unroll
 import util.NetworkGraphUtil
@@ -278,8 +277,6 @@ class NetworkBaselineTest extends BaseSpecification {
     }
 
     @Unroll
-    // TODO: ROX-11126
-    @Ignore
     @Category(NetworkBaseline)
     def "Verify user get for non-existent baseline"() {
         when:
