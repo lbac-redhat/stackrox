@@ -307,16 +307,10 @@ class NetworkBaselineTest extends BaseSpecification {
             180)
 
         // Let the client baseline come out of observation
-        def baselinedClientBaseline = evaluateWithRetry(30, 4) {
-            def baseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
-            def now = System.currentTimeSeconds()
-            if (baseline.getObservationPeriodEnd().getSeconds() > now) {
-                throw new RuntimeException(
-                    "Baseline ${baselinedClientDeploymentID} is not out of observation yet. Baseline is ${baseline}"
-                )
-            }
-            return baseline
-        }
+        sleep (EXPECTED_BASELINE_DURATION_SECONDS + CLOCK_SKEW_ALLOWANCE_SECONDS) * 1000
+
+        // Get the client baseline
+        def baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
         assert baselinedClientBaseline
 
         // Now re-retrieve the server baseline to use in validation
