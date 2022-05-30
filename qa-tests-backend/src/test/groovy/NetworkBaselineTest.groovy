@@ -274,8 +274,6 @@ class NetworkBaselineTest extends BaseSpecification {
         )
         validateBaseline(postLockClientBaseline, beforeDeferredCreate, justAfterDeferredCreate,
             [])
-
-        when:
     }
 
     @Unroll
