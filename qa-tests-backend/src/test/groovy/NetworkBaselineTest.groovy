@@ -55,9 +55,9 @@ class NetworkBaselineTest extends BaseSpecification {
                 .setImage(NGINX_IMAGE)
                 .addLabel("app", BASELINED_USER_CLIENT_DEP_NAME)
                 .setCommand(["/bin/sh", "-c",])
-                .setArgs(
-                    ["for i in \$(seq 1 10); do wget -S http://${USER_DEP_NAME}; sleep 1; done; sleep 1000" as String]
-                )
+                .setArgs(["while sleep 1; " +
+                      "do wget -S http://${USER_DEP_NAME}; " +
+                      "done" as String,])
 
     static final private ANOMALOUS_CLIENT_DEP = createAndRegisterDeployment()
         .setName(ANOMALOUS_CLIENT_DEP_NAME)
@@ -274,6 +274,8 @@ class NetworkBaselineTest extends BaseSpecification {
         )
         validateBaseline(postLockClientBaseline, beforeDeferredCreate, justAfterDeferredCreate,
             [])
+
+        when:
     }
 
     @Unroll
@@ -290,9 +292,11 @@ class NetworkBaselineTest extends BaseSpecification {
 
         log.info "Deployment IDs Server: ${serverDeploymentID}"
 
-//         def serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
-//         log.info "Requested Baseline: ${serverBaseline}"
-//         assert serverBaseline
+        // Get the server baseline to simulate a user askng for a baseline prior to
+        // observation ending.
+        def serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
+        log.info "Requested Baseline: ${serverBaseline}"
+        assert serverBaseline
 
         def beforeClientDeploymentCreate = System.currentTimeSeconds()
         batchCreate([BASELINED_USER_CLIENT_DEP])
@@ -304,6 +308,9 @@ class NetworkBaselineTest extends BaseSpecification {
         assert NetworkGraphUtil.checkForEdge(baselinedClientDeploymentID, serverDeploymentID, null,
             180)
 
+        // When the client comes out of observation it should add a peer to
+        // the server baseline because it is not locked so the peer will be added
+        // as long as one is deployment is in observation.
         def serverBaseline = evaluateWithRetry(30, 4) {
             def baseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
             if (baseline.getPeersCount() == 0) {
@@ -313,22 +320,10 @@ class NetworkBaselineTest extends BaseSpecification {
             }
             return baseline
         }
-        assert serverBaseline
-        log.info "Requested Baseline: ${serverBaseline}"
-
-
-
-
-
-        // Let the client baseline come out of observation
-//         sleep EXPECTED_BASELINE_DURATION_SECONDS * 1000
 
         // Get the client baseline
         def baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
         assert baselinedClientBaseline
-
-        // Now re-retrieve the server baseline to use in validation
-        serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
 
         log.info "Server Baseline: ${serverBaseline}"
         log.info "Client Baseline: ${baselinedClientBaseline}"
@@ -339,8 +334,6 @@ class NetworkBaselineTest extends BaseSpecification {
         // connection occurred during the observation window.
         validateBaseline(serverBaseline, beforeDeploymentCreate, justAfterDeploymentCreate,
             [new Tuple2<String, Boolean>(baselinedClientDeploymentID, true)])
-        validateBaseline(baselinedClientBaseline, beforeClientDeploymentCreate, justAfterClientDeploymentCreate,
-            [new Tuple2<String, Boolean>(serverDeploymentID, false)]
         )
     }
 }
