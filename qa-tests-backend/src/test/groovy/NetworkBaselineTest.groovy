@@ -290,9 +290,9 @@ class NetworkBaselineTest extends BaseSpecification {
 
         log.info "Deployment IDs Server: ${serverDeploymentID}"
 
-        def serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
-        log.info "Requested Baseline: ${serverBaseline}"
-        assert serverBaseline
+//         def serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
+//         log.info "Requested Baseline: ${serverBaseline}"
+//         assert serverBaseline
 
         def beforeClientDeploymentCreate = System.currentTimeSeconds()
         batchCreate([BASELINED_USER_CLIENT_DEP])
@@ -300,14 +300,28 @@ class NetworkBaselineTest extends BaseSpecification {
 
         def baselinedClientDeploymentID = BASELINED_USER_CLIENT_DEP.deploymentUid
         assert baselinedClientDeploymentID != null
-
         log.info "Client deployment: ${baselinedClientDeploymentID}"
-
         assert NetworkGraphUtil.checkForEdge(baselinedClientDeploymentID, serverDeploymentID, null,
             180)
 
+        def serverBaseline = evaluateWithRetry(30, 4) {
+            def baseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
+            if (baseline.getPeersCount() == 0) {
+                throw new RuntimeException(
+                    "No peers in baseline for deployment ${serverDeploymentID} yet. Baseline is ${baseline}"
+                )
+            }
+            return baseline
+        }
+        assert serverBaseline
+        log.info "Requested Baseline: ${serverBaseline}"
+
+
+
+
+
         // Let the client baseline come out of observation
-        sleep EXPECTED_BASELINE_DURATION_SECONDS * 1000
+//         sleep EXPECTED_BASELINE_DURATION_SECONDS * 1000
 
         // Get the client baseline
         def baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
