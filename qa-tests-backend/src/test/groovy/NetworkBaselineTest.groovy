@@ -331,7 +331,7 @@ class NetworkBaselineTest extends BaseSpecification {
         // The client->server connection should be baselined since the client as the
         // connection occurred during the observation window.
         validateBaseline(serverBaseline, beforeDeploymentCreate, justAfterDeploymentCreate,
-            [new Tuple2<String, Boolean>(baselinedClientDeploymentID, true)])
+            [new Tuple2<String, Boolean>(baselinedClientDeploymentID, true)]
         )
     }
 }
