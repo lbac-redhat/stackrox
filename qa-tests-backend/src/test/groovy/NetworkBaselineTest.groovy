@@ -309,7 +309,7 @@ class NetworkBaselineTest extends BaseSpecification {
         // When the client comes out of observation it should add a peer to
         // the server baseline because it is not locked so the peer will be added
         // as long as one is deployment is in observation.
-        def serverBaseline = evaluateWithRetry(30, 4) {
+        serverBaseline = evaluateWithRetry(30, 4) {
             def baseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
             if (baseline.getPeersCount() == 0) {
                 throw new RuntimeException(
