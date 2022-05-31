@@ -290,12 +290,13 @@ class NetworkBaselineTest extends BaseSpecification {
 
         log.info "Deployment IDs Server: ${serverDeploymentID}"
 
-        // Get the server baseline to simulate a user askng for a baseline prior to
+        // Get the server baseline to simulate a user asking for a baseline prior to
         // observation ending.
         def serverBaseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
         log.info "Requested Baseline: ${serverBaseline}"
         assert serverBaseline
 
+        // Add a client deployment
         def beforeClientDeploymentCreate = System.currentTimeSeconds()
         batchCreate([BASELINED_USER_CLIENT_DEP])
         def justAfterClientDeploymentCreate = System.currentTimeSeconds()
@@ -303,12 +304,25 @@ class NetworkBaselineTest extends BaseSpecification {
         def baselinedClientDeploymentID = BASELINED_USER_CLIENT_DEP.deploymentUid
         assert baselinedClientDeploymentID != null
         log.info "Client deployment: ${baselinedClientDeploymentID}"
+
+        // Waiting on it to come out of observation.
+        def baselinedClientBaseline = evaluateWithRetry(30, 4) {
+            def baseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
+            def now = System.currentTimeSeconds()
+            if (baseline.getObservationPeriodEnd().getSeconds() > now) {
+                throw new RuntimeException(
+                    "Baseline ${baselinedClientDeploymentID} is in observation. Baseline is ${baseline}"
+                )
+            }
+            return baseline
+        }
+        assert baselinedClientBaseline
         assert NetworkGraphUtil.checkForEdge(baselinedClientDeploymentID, serverDeploymentID, null,
             180)
 
         // When the client comes out of observation it should add a peer to
         // the server baseline because it is not locked so the peer will be added
-        // as long as one is deployment is in observation.
+        // as long as one deployment is in observation.
         serverBaseline = evaluateWithRetry(30, 4) {
             def baseline = NetworkBaselineService.getNetworkBaseline(serverDeploymentID)
             if (baseline.getPeersCount() == 0) {
@@ -318,10 +332,6 @@ class NetworkBaselineTest extends BaseSpecification {
             }
             return baseline
         }
-
-        // Get the client baseline
-        def baselinedClientBaseline = NetworkBaselineService.getNetworkBaseline(baselinedClientDeploymentID)
-        assert baselinedClientBaseline
 
         log.info "Server Baseline: ${serverBaseline}"
         log.info "Client Baseline: ${baselinedClientBaseline}"
