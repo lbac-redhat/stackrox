@@ -79,6 +79,11 @@ func resourceMetadataFromString(resource string) permissions.ResourceMetadata {
 			return resourceMetadata
 		}
 	}
+	for _, resourceMetadata := range resources.ListAllInternalMetadata() {
+		if string(resourceMetadata.Resource) == resource {
+			return resourceMetadata
+		}
+	}
 	panic("unknown resource: " + resource)
 }
 
