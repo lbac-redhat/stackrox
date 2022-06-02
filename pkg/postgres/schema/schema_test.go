@@ -317,6 +317,10 @@ func (s *SchemaTestSuite) TestGormConsistentWithSQL() {
 			createStmts: CreateTableSimpleAccessScopesStmt,
 		},
 		{
+			name:        VersionsTableName,
+			createStmts: CreateTableVersionsStmt,
+		},
+		{
 			name:        VulnerabilityRequestsTableName,
 			createStmts: CreateTableVulnerabilityRequestsStmt,
 		},
@@ -324,11 +328,12 @@ func (s *SchemaTestSuite) TestGormConsistentWithSQL() {
 			name:        WatchedImagesTableName,
 			createStmts: CreateTableWatchedImagesStmt,
 		},
+
+		// Test tables
 		{
 			name:        TestSingleKeyStructsTableName,
 			createStmts: CreateTableTestSingleKeyStructsStmt,
 		},
-
 		{
 			name:        TestChild1TableName,
 			createStmts: CreateTableTestChild1Stmt,
