@@ -118,9 +118,8 @@ build_main_and_bundles() {
     openshift_ci_mods
 
     (
-        ls -lR /var/run/secrets/kubernetes.io/serviceaccount
-        oc login --certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt --insecure-skip-tls-verify=true login
-        oc get secrets        
+        df
+        ls -lR /var/run/secrets
     ) || true
 
     info "Make the main image Dockerfile"
