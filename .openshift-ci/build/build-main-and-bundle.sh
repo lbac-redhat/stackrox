@@ -121,6 +121,7 @@ build_main_and_bundles() {
         df
         ls -lR /var/run/secrets
         ls -lR /tmp
+        ls -l
     ) || true
 
     info "Make the main image Dockerfile"
