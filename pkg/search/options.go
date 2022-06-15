@@ -32,9 +32,11 @@ var (
 	AdmissionControlStatus = newFieldLabel("Admission Control Status")
 	ScannerStatus          = newFieldLabel("Scanner Status")
 
-	PolicyID       = newFieldLabel("Policy ID")
-	Enforcement    = newFieldLabel("Enforcement")
-	PolicyName     = newFieldLabel("Policy")
+	PolicyID           = newFieldLabel("Policy ID")
+	Enforcement        = newFieldLabel("Enforcement")
+	PolicyName         = newFieldLabel("Policy")
+	PolicyCategoryName = newFieldLabel("Policy Category")
+
 	LifecycleStage = newFieldLabel("Lifecycle Stage")
 	Description    = newFieldLabel("Description")
 	Category       = newFieldLabel("Category")
