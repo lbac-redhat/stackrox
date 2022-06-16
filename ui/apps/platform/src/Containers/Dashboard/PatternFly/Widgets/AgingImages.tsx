@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Flex, FlexItem, Title, Button } from '@patternfly/react-core';
 import { useQuery, gql } from '@apollo/client';
 
@@ -16,7 +16,7 @@ type AgingImagesQueryResponse = {
 
 function AgingImages() {
     const { searchFilter } = useURLSearch();
-    // const { data: deployments, loading, error } = useDeploymentsAtRisk(searchFilter);
+    const [selectedTimeRanges, setSelectedTimeRanges] = useState<number[]>([30, 90, 180, 366]);
 
     const query = '';
 
