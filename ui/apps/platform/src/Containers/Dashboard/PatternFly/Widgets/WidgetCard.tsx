@@ -6,7 +6,7 @@ import WidgetErrorEmptyState from './WidgetErrorEmptyState';
 
 type WidgetCardProps = {
     isLoading: boolean;
-    error: Error | null;
+    error?: Error;
     header: ReactNode;
     children: ReactNode;
 };
