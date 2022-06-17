@@ -9,6 +9,7 @@ import {
     Form,
     FormGroup,
     Checkbox,
+    TextInput,
 } from '@patternfly/react-core';
 import { useQuery, gql } from '@apollo/client';
 
@@ -18,7 +19,12 @@ import { getRequestQueryStringForSearchFilter } from 'utils/searchUtils';
 import useSelectToggle from 'hooks/patternfly/useSelectToggle';
 import { SearchFilter } from 'types/search';
 import WidgetCard from './WidgetCard';
-import AgingImagesChart, { TimeRangeCounts, TimeRangeTuple } from './AgingImagesChart';
+import AgingImagesChart, {
+    TimeRangeCounts,
+    TimeRangeTupleIndex,
+    TimeRangeTuple,
+    timeRangeTupleIndices,
+} from './AgingImagesChart';
 
 const imageCountQuery = gql`
     query agingImagesQuery(
@@ -50,6 +56,7 @@ function getWidgetTitle(
     selectedTimeRanges.forEach((range, index) => {
         if (typeof range === 'number') {
             // TODO Is this correct? Validate if each bar should be cumulative or separate
+            // Should be "separate", i.e. distribution
             totalImages = Infinity;
         }
     });
@@ -69,10 +76,22 @@ function getWidgetTitle(
     return `${totalImages} Aging images`;
 }
 
+function updateAt<T extends TimeRangeTuple>(
+    tuple: T,
+    index: TimeRangeTupleIndex,
+    value: T[number]
+): T {
+    const newTuple: T = [...tuple];
+    newTuple[index] = value;
+    return newTuple;
+}
+
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
     const { searchFilter } = useURLSearch();
-    const [defaultTimeRanges] = useState<Required<TimeRangeTuple>>([30, 90, 180, 365]);
+    const [defaultTimeRanges, setDefaultTimeRanges] = useState<Required<TimeRangeTuple>>([
+        30, 90, 180, 365,
+    ]);
     const [selectedTimeRanges, setSelectedTimeRanges] = useState<TimeRangeTuple>([
         ...defaultTimeRanges,
     ]);
@@ -84,11 +103,29 @@ function AgingImages() {
                     ? defaultTimeRanges[index]
                     : undefined;
 
-            const newEnabled: TimeRangeTuple = [...selectedTimeRanges];
-            newEnabled[index] = newValue;
-            setSelectedTimeRanges(newEnabled);
+            setSelectedTimeRanges(updateAt(selectedTimeRanges, index, newValue));
         },
         [selectedTimeRanges, defaultTimeRanges]
+    );
+
+    const onTimeRangeChange = useCallback(
+        (value: string, index: TimeRangeTupleIndex): void => {
+            if (!/^\d+$/.test(value)) {
+                return;
+            }
+            const newTimeRange = parseInt(value, 10);
+
+            const lowerBounds = [0, ...defaultTimeRanges.slice(0, 3)];
+            const upperBounds = [...defaultTimeRanges.slice(1, 4), Infinity];
+
+            if (newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index]) {
+                setDefaultTimeRanges(updateAt(defaultTimeRanges, index, newTimeRange));
+                if (typeof selectedTimeRanges[index] === 'number') {
+                    setSelectedTimeRanges(updateAt(selectedTimeRanges, index, newTimeRange));
+                }
+            }
+        },
+        [defaultTimeRanges, selectedTimeRanges]
     );
 
     const variables = Object.fromEntries(
@@ -138,16 +175,30 @@ function AgingImages() {
                                     fieldId={`${fieldIdPrefix}-time-range-0`}
                                     label="Image age values"
                                 >
-                                    {[0, 1, 2, 3].map((n) => (
-                                        <Checkbox
-                                            aria-label="Toggle image time range"
-                                            id={`${fieldIdPrefix}-time-range-${n}`}
-                                            name={`${fieldIdPrefix}-time-range-${n}`}
-                                            className="pf-u-my-sm pf-u-pr-3xl"
-                                            isChecked={typeof selectedTimeRanges[n] !== 'undefined'}
-                                            onChange={() => toggleTimeRange(n)}
-                                            label={defaultTimeRanges[n]}
-                                        />
+                                    {timeRangeTupleIndices.map((n) => (
+                                        <div key={n}>
+                                            <Checkbox
+                                                aria-label="Toggle image time range"
+                                                id={`${fieldIdPrefix}-time-range-${n}`}
+                                                name={`${fieldIdPrefix}-time-range-${n}`}
+                                                className="pf-u-mb-sm pf-u-display-flex pf-u-align-items-center"
+                                                isChecked={
+                                                    typeof selectedTimeRanges[n] !== 'undefined'
+                                                }
+                                                onChange={() => toggleTimeRange(n)}
+                                                label={
+                                                    <TextInput
+                                                        aria-label="Image age in days"
+                                                        style={{ minWidth: '100px' }}
+                                                        onChange={(val) =>
+                                                            onTimeRangeChange(val, n)
+                                                        }
+                                                        type="number"
+                                                        value={defaultTimeRanges[n]}
+                                                    />
+                                                }
+                                            />
+                                        </div>
                                     ))}
                                 </FormGroup>
                             </Form>
