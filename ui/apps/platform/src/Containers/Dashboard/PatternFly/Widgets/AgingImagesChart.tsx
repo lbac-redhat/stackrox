@@ -68,6 +68,7 @@ function AgingImagesChart({
     const labelLinks: string[] = [];
     const labelText: string[] = [];
 
+    // TODO Move this processing up
     selectedTimeRanges.forEach((range, index) => {
         if (typeof range !== 'undefined') {
             data.push({
