@@ -49,7 +49,8 @@ function getWidgetTitle(
 
     selectedTimeRanges.forEach((range, index) => {
         if (typeof range === 'number') {
-            totalImages += timeRangeCounts[`timeRange${index}`];
+            // TODO Is this correct? Validate if each bar should be cumulative or separate
+            totalImages = Infinity;
         }
     });
 
@@ -71,9 +72,7 @@ function getWidgetTitle(
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
     const { searchFilter } = useURLSearch();
-    const [defaultTimeRanges, setDefaultTimeRanges] = useState<Required<TimeRangeTuple>>([
-        30, 90, 180, 365,
-    ]);
+    const [defaultTimeRanges] = useState<Required<TimeRangeTuple>>([30, 90, 180, 365]);
     const [selectedTimeRanges, setSelectedTimeRanges] = useState<TimeRangeTuple>([
         ...defaultTimeRanges,
     ]);
@@ -102,19 +101,21 @@ function AgingImages() {
         ])
     );
 
-    const { data, loading, error } = useQuery<TimeRangeCounts>(imageCountQuery, {
+    const { data, previousData, loading, error } = useQuery<TimeRangeCounts>(imageCountQuery, {
         variables,
     });
 
+    const timeRangeCounts = data ?? previousData;
+
     return (
         <WidgetCard
-            isLoading={loading}
+            isLoading={loading && !timeRangeCounts}
             error={error}
             header={
                 <Flex direction={{ default: 'row' }}>
                     <FlexItem grow={{ default: 'grow' }}>
                         <Title headingLevel="h2">
-                            {getWidgetTitle(searchFilter, selectedTimeRanges, data)}
+                            {getWidgetTitle(searchFilter, selectedTimeRanges, timeRangeCounts)}
                         </Title>
                     </FlexItem>
                     <FlexItem>
@@ -158,11 +159,11 @@ function AgingImages() {
                 </Flex>
             }
         >
-            {data && (
+            {timeRangeCounts && (
                 <AgingImagesChart
                     searchFilter={searchFilter}
                     selectedTimeRanges={selectedTimeRanges}
-                    timeRangeCounts={data}
+                    timeRangeCounts={timeRangeCounts}
                 />
             )}
         </WidgetCard>

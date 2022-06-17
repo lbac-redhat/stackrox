@@ -117,7 +117,7 @@ function AgingImagesChart({
                             key={fill}
                             barWidth={defaultChartBarWidth}
                             data={[barData]}
-                            labels={({ datum }) => `${datum.y as string}`}
+                            labels={({ datum }) => `${Math.round(parseInt(datum.y, 10))}`}
                             style={{ data: { fill } }}
                             events={[
                                 navigateOnClickEvent(history, (targetProps) => {
