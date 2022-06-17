@@ -35,6 +35,12 @@ export type AgingImagesChartProps = {
     timeRangeCounts: TimeRangeCounts;
 };
 
+function yAxisTitle(searchFilter: SearchFilter) {
+    const isActiveImages = Boolean(searchFilter.Cluster) || Boolean(searchFilter['Namespace ID']);
+
+    return isActiveImages ? 'Active images' : 'All images';
+}
+
 const labelLinkCallback = ({ datum }: ChartLabelProps, links: string[]) => {
     return typeof datum === 'number' ? links[datum - 1] : '';
 };
@@ -82,7 +88,7 @@ function AgingImagesChart({
                 height={defaultChartHeight}
                 width={widgetContainerResizeEntry?.contentRect.width} // Victory defaults to 450
                 padding={{
-                    top: 10,
+                    top: 25,
                     left: 60,
                     right: 10,
                     bottom: 60,
@@ -98,7 +104,12 @@ function AgingImagesChart({
                         />
                     }
                 />
-                <ChartAxis label="Active (TODO) images" dependentAxis showGrid />
+                <ChartAxis
+                    label={yAxisTitle(searchFilter)}
+                    padding={{ bottom: 10 }}
+                    dependentAxis
+                    showGrid
+                />
                 {data.map((barData, index) => {
                     const fill = fillColors[index];
                     return (
@@ -106,6 +117,7 @@ function AgingImagesChart({
                             key={fill}
                             barWidth={defaultChartBarWidth}
                             data={[barData]}
+                            labels={({ datum }) => `${datum.y as string}`}
                             style={{ data: { fill } }}
                             events={[
                                 navigateOnClickEvent(history, (targetProps) => {
