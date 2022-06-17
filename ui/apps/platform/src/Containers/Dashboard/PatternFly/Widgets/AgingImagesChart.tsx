@@ -65,6 +65,7 @@ function AgingImagesChart({ selectedTimeRanges, timeRangeCounts }: AgingImagesCh
                     const fill = severityColorScale[index];
                     return (
                         <ChartBar
+                            key={fill}
                             barWidth={defaultChartBarWidth}
                             data={[data[index]]}
                             style={{ data: { fill } }}
