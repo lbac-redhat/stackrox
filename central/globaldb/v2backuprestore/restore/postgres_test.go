@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/stackrox/rox/central/globaldb"
 	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/postgres/pgadmin"
+	"github.com/stackrox/rox/pkg/postgres/pgconfig"
 	"github.com/stackrox/rox/pkg/postgres/pgtest"
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/testutils/envisolator"
@@ -46,7 +46,7 @@ func (s *PostgresRestoreSuite) SetupTest() {
 
 	s.pool = pool
 	s.config = config
-	s.sourceMap, err = globaldb.ParseSource(source)
+	s.sourceMap, err = pgconfig.ParseSource(source)
 	if err != nil {
 		log.Infof("Unable to parse source %q", source)
 	}
@@ -69,7 +69,7 @@ func (s *PostgresRestoreSuite) TestRestoreUtilities() {
 	s.False(CheckIfRestoreDBExists(s.config))
 
 	// Create a restore DB
-	err := pgadmin.CreateDB(s.sourceMap, s.config, createTemplate, restoreDB)
+	err := pgadmin.CreateDB(s.sourceMap, s.config, "template1", restoreDB)
 	s.Nil(err)
 
 	// Verify restore DB was created
@@ -81,7 +81,7 @@ func (s *PostgresRestoreSuite) TestRestoreUtilities() {
 	badConfig.ConnConfig.User = "baduser"
 
 	// Fail to create restore DB because of insufficient user permissions
-	err = pgadmin.CreateDB(s.sourceMap, badConfig, createTemplate, restoreDB)
+	err = pgadmin.CreateDB(s.sourceMap, badConfig, "template1", restoreDB)
 	s.NotNil(err)
 
 	// Fail to drop restore DB because of insufficient user permissions
