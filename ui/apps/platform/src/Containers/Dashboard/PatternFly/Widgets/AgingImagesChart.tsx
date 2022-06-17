@@ -26,8 +26,10 @@ function linkForAgingImages(searchFilter: SearchFilter, ageRange: number) {
     return `${vulnManagementImagesPath}${queryString}`;
 }
 
-export type TimeRangeCounts = Record<`timeRange${0 | 1 | 2 | 3}`, number>;
 export type TimeRangeTuple = [number?, number?, number?, number?];
+export const timeRangeTupleIndices = [0, 1, 2, 3] as const;
+export type TimeRangeTupleIndex = typeof timeRangeTupleIndices[number];
+export type TimeRangeCounts = Record<`timeRange${TimeRangeTupleIndex}`, number>;
 
 export type AgingImagesChartProps = {
     searchFilter: SearchFilter;
@@ -89,7 +91,7 @@ function AgingImagesChart({
                 width={widgetContainerResizeEntry?.contentRect.width} // Victory defaults to 450
                 padding={{
                     top: 25,
-                    left: 60,
+                    left: 55,
                     right: 10,
                     bottom: 60,
                 }}
