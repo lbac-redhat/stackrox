@@ -12,8 +12,8 @@ release_mgmt() {
 
     local full_version
     full_version="$(make --quiet tag)"
-    if is_RC_version "${full_version}"; then
-        check_docs "${full_version}" || { release_issues+=("docs/ is not valid for a release."); }
+    if is_RC_version "${full_version}" && ! check_docs "${full_version}"; then
+        release_issues+=("docs/ is not valid for a release.")
     fi
 
     if [[ "${#release_issues[@]}" != "0" ]]; then
