@@ -317,7 +317,7 @@ check_docs() {
 
     [[ "$full_version" =~ $RELEASE_RC_TAG_BASH_REGEX ]] || {
         info "Skipping step as this is not a release or RC build"
-        return
+        return 0
     }
 
     local release_version="${BASH_REMATCH[1]}"
@@ -326,7 +326,7 @@ check_docs() {
     actual_content_branch="$(git config -f .gitmodules submodule.docs/content.branch)"
     [[ "$actual_content_branch" == "$expected_content_branch" ]] || {
         echo >&2 "ERROR: Expected docs/content submodule to point to branch ${expected_content_branch}, got: ${actual_content_branch}"
-        exit 1
+        return 1
     }
 
     git submodule update --remote docs/content
@@ -334,7 +334,7 @@ check_docs() {
         echo >&2 "ERROR: The docs/content submodule is out of date for the ${expected_content_branch} branch; please run"
         echo >&2 "  git submodule update --remote docs/content"
         echo >&2 "and commit the result."
-        exit 1
+        return 1
     }
 
     info "The docs version is as expected"
