@@ -14,6 +14,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+const (
+	restoreDB = "central_restore"
+
+	// Database with no typical connections that will be used as a template in a create
+	adminDB = "template1"
+)
+
 type PostgresRestoreSuite struct {
 	suite.Suite
 	envIsolator *envisolator.EnvIsolator
@@ -69,7 +76,7 @@ func (s *PostgresRestoreSuite) TestRestoreUtilities() {
 	s.False(CheckIfRestoreDBExists(s.config))
 
 	// Create a restore DB
-	err := pgadmin.CreateDB(s.sourceMap, s.config, "template1", restoreDB)
+	err := pgadmin.CreateDB(s.sourceMap, s.config, adminDB, restoreDB)
 	s.Nil(err)
 
 	// Verify restore DB was created
@@ -81,7 +88,7 @@ func (s *PostgresRestoreSuite) TestRestoreUtilities() {
 	badConfig.ConnConfig.User = "baduser"
 
 	// Fail to create restore DB because of insufficient user permissions
-	err = pgadmin.CreateDB(s.sourceMap, badConfig, "template1", restoreDB)
+	err = pgadmin.CreateDB(s.sourceMap, badConfig, adminDB, restoreDB)
 	s.NotNil(err)
 
 	// Fail to drop restore DB because of insufficient user permissions

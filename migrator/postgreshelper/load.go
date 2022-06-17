@@ -44,7 +44,7 @@ func Load(conf *config.Config) (*gorm.DB, error) {
 			return
 		}
 
-		activeDB := fmt.Sprintf("%s%s", conf.CentralDB.RootDatabaseName, activeSuffix)
+		activeDB := pgconfig.GetActiveDB()
 
 		sourceMap, adminConfig, err := pgconfig.GetPostgresConfig()
 		// Create the central database if necessary

@@ -8,7 +8,6 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
-	"github.com/stackrox/rox/central/globaldb"
 	"github.com/stackrox/rox/pkg/config"
 	"github.com/stackrox/rox/pkg/logging"
 	"github.com/stackrox/rox/pkg/postgres/pgadmin"
@@ -100,14 +99,14 @@ func SwitchToRestoredDB(sourceMap map[string]string, dbConfig *pgxpool.Config) e
 
 	// Restore succeeded to the separate DB, so we need to drop the original in order to rename
 	// the new one.
-	err := pgadmin.DropDB(sourceMap, dbConfig, globaldb.ActiveDB)
+	err := pgadmin.DropDB(sourceMap, dbConfig, pgconfig.GetActiveDB())
 	if err != nil {
 		log.Errorf("Could not drop the DB: %v", err)
 		return err
 	}
 
 	// rename central_restore to postgres
-	err = pgadmin.RenameDB(connectPool, getRestoreDBName(), globaldb.ActiveDB)
+	err = pgadmin.RenameDB(connectPool, getRestoreDBName(), pgconfig.GetActiveDB())
 	if err != nil {
 		log.Errorf("Could not rename the DB: %v", err)
 		return err

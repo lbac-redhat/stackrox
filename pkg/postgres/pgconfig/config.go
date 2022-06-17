@@ -13,6 +13,8 @@ import (
 
 const (
 	dbPasswordFile = "/run/secrets/stackrox.io/db-password/password"
+
+	activeSuffix = "_active"
 )
 
 // GetPostgresConfig - gets the configuration used to connect to Postgres
@@ -55,4 +57,9 @@ func ParseSource(source string) (map[string]string, error) {
 	}
 
 	return sourceMap, nil
+}
+
+// GetActiveDB - returns the name of the active database
+func GetActiveDB() string {
+	return fmt.Sprintf("%s%s", config.GetConfig().CentralDB.RootDatabaseName, activeSuffix)
 }

@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/stackrox/rox/central/globaldb"
 	"github.com/stackrox/rox/pkg/logging"
 	"github.com/stackrox/rox/pkg/postgres/pgadmin"
 	"github.com/stackrox/rox/pkg/postgres/pgconfig"
@@ -40,7 +39,7 @@ func (bu *PostgresBackup) WriteTo(ctx context.Context, out io.Writer) error {
 	// Set the options for pg_dump from the connection config
 	options := []string{
 		"-d",
-		globaldb.ActiveDB,
+		pgconfig.GetActiveDB(),
 		"-Fc", // Custom format, compressed hopefully supports stdin to restore
 		"-v",
 	}

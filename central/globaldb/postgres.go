@@ -2,13 +2,11 @@ package globaldb
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stackrox/rox/central/globaldb/metrics"
-	"github.com/stackrox/rox/pkg/config"
 	"github.com/stackrox/rox/pkg/postgres/pgadmin"
 	"github.com/stackrox/rox/pkg/postgres/pgconfig"
 	"github.com/stackrox/rox/pkg/retry"
@@ -55,8 +53,6 @@ SELECT TABLE_NAME
   ) a
   WHERE oid = parent
 ) a;`
-
-	activeSuffix = "_active"
 )
 
 var (
@@ -67,8 +63,6 @@ var (
 
 	// PostgresQueryTimeout - Postgres query timeout value
 	PostgresQueryTimeout = 10 * time.Second
-	// ActiveDB - database name for the current working database
-	ActiveDB string
 )
 
 // GetPostgres returns a global database instance
@@ -80,18 +74,18 @@ func GetPostgres() *pgxpool.Pool {
 		}
 
 		// Build the active database name for the connection
-		ActiveDB = fmt.Sprintf("%s%s", config.GetConfig().CentralDB.RootDatabaseName, activeSuffix)
+		activeDB := pgconfig.GetActiveDB()
 
 		// Create the central database if necessary
-		if !pgadmin.CheckIfDBExists(dbConfig, ActiveDB) {
-			err = pgadmin.CreateDB(sourceMap, dbConfig, pgadmin.AdminDB, ActiveDB)
+		if !pgadmin.CheckIfDBExists(dbConfig, activeDB) {
+			err = pgadmin.CreateDB(sourceMap, dbConfig, pgadmin.AdminDB, activeDB)
 			if err != nil {
 				log.Fatalf("Could not create central database: %v", err)
 			}
 		}
 
 		// Set the connection to be the central database.
-		dbConfig.ConnConfig.Database = ActiveDB
+		dbConfig.ConnConfig.Database = activeDB
 
 		if err := retry.WithRetry(func() error {
 			postgresDB, err = pgxpool.ConnectConfig(context.Background(), dbConfig)
