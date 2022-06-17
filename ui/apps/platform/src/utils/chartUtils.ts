@@ -4,7 +4,7 @@ import { EventCallbackInterface, EventPropTypeInterface } from 'victory-core';
 
 import { severityColors } from 'constants/visuals/colors';
 
-const severityColorScale = Object.values(severityColors);
+export const severityColorScale = Object.values(severityColors);
 
 // Clone default PatternFly chart themes
 const defaultTheme = getTheme(ChartThemeColor.multi);
@@ -16,10 +16,6 @@ export const defaultChartBarWidth = 18;
 /** A Victory chart theme based on grey/yellow/orange/red colors to indicate severity */
 export const patternflySeverityTheme = {
     ...defaultTheme,
-    bar: {
-        ...defaultTheme.bar,
-        colorScale: severityColorScale,
-    },
     stack: {
         ...defaultTheme.stack,
         colorScale: severityColorScale,

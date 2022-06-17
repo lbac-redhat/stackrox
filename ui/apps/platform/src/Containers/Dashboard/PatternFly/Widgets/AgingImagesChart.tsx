@@ -7,16 +7,37 @@ import {
     defaultChartHeight,
     defaultChartBarWidth,
     patternflySeverityTheme,
+    severityColorScale,
 } from 'utils/chartUtils';
 
+export type TimeRangeCounts = Record<`timeRange${0 | 1 | 2 | 3}`, number>;
+export type TimeRangeTuple = [number?, number?, number?, number?];
+
 export type AgingImagesChartProps = {
-    timeRangeCounts: Record<string, number>;
+    selectedTimeRanges: TimeRangeTuple;
+    timeRangeCounts: TimeRangeCounts;
 };
 
-function AgingImagesChart({ timeRangeCounts }: AgingImagesChartProps) {
+function AgingImagesChart({ selectedTimeRanges, timeRangeCounts }: AgingImagesChartProps) {
     const history = useHistory();
     const [widgetContainer, setWidgetContainer] = useState<HTMLDivElement | null>(null);
     const widgetContainerResizeEntry = useResizeObserver(widgetContainer);
+
+    const data: {
+        x: string;
+        y: number;
+    }[] = [];
+
+    selectedTimeRanges.forEach((range, index) => {
+        if (typeof range === 'undefined') {
+            // TODO Remove color from theme
+        } else {
+            data.push({
+                x: `>${range} days`,
+                y: timeRangeCounts[`timeRange${index}`],
+            });
+        }
+    });
 
     return (
         <div ref={setWidgetContainer}>
@@ -24,7 +45,7 @@ function AgingImagesChart({ timeRangeCounts }: AgingImagesChartProps) {
                 ariaDesc="Aging images grouped by date of last update"
                 ariaTitle="Aging images"
                 animate={{ duration: 300 }}
-                domainPadding={{ x: [40, 40] }}
+                domainPadding={{ x: [50, 50] }}
                 height={defaultChartHeight}
                 width={widgetContainerResizeEntry?.contentRect.width} // Victory defaults to 450
                 padding={{
@@ -36,14 +57,20 @@ function AgingImagesChart({ timeRangeCounts }: AgingImagesChartProps) {
                 theme={patternflySeverityTheme}
             >
                 <ChartAxis label="Image age" />
-                <ChartAxis label="Active (TODO) images" dependentAxis />
-                <ChartBar
-                    barWidth={defaultChartBarWidth}
-                    data={[
-                        { x: '>30 days', y: 20 },
-                        { x: '>60 days', y: 30 },
-                    ]}
-                />
+                <ChartAxis label="Active (TODO) images" dependentAxis showGrid />
+                {selectedTimeRanges.map((range, index) => {
+                    if (typeof selectedTimeRanges[index] !== 'number') {
+                        return null;
+                    }
+                    const fill = severityColorScale[index];
+                    return (
+                        <ChartBar
+                            barWidth={defaultChartBarWidth}
+                            data={[data[index]]}
+                            style={{ data: { fill } }}
+                        />
+                    );
+                })}
             </Chart>
         </div>
     );
