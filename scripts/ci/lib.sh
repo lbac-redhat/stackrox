@@ -719,7 +719,7 @@ gate_merge_job() {
         return
     fi
 
-    info "$job will be skipped"
+    info "$job will be skipped - neither master/run_on_master or tagged/run_on_tags"
     exit 0
 }
 
