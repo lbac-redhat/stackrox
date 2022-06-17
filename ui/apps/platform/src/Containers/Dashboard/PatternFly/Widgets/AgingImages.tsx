@@ -51,15 +51,10 @@ function getWidgetTitle(
         return 'Aging images';
     }
 
-    let totalImages = 0;
-
-    selectedTimeRanges.forEach((range, index) => {
-        if (typeof range === 'number') {
-            // TODO Is this correct? Validate if each bar should be cumulative or separate
-            // Should be "separate", i.e. distribution
-            totalImages = Infinity;
-        }
-    });
+    const totalImages =
+        Object.values(timeRangeCounts).find((range, index) => {
+            return typeof selectedTimeRanges[index] === 'number';
+        }) ?? 0;
 
     const isActiveImages = Boolean(searchFilter.Cluster) || Boolean(searchFilter['Namespace ID']);
     const isSingular = totalImages === 1;
@@ -84,6 +79,29 @@ function updateAt<T extends TimeRangeTuple>(
     const newTuple: T = [...tuple];
     newTuple[index] = value;
     return newTuple;
+}
+
+function processTimeRangeCounts(
+    data: TimeRangeCounts,
+    selectedTimeRanges: TimeRangeTuple
+): TimeRangeCounts {
+    const processedCounts = {
+        timeRange0: 0,
+        timeRange1: 0,
+        timeRange2: 0,
+        timeRange3: 0,
+    };
+    let currentTotal = 0;
+    for (let i = timeRangeTupleIndices.length - 1; i >= 0; i -= 1) {
+        const key = `timeRange${i}`;
+        if (typeof selectedTimeRanges[i] === 'number') {
+            processedCounts[key] = data[key];
+            processedCounts[key] -= currentTotal;
+            currentTotal += processedCounts[key];
+        }
+    }
+
+    return processedCounts;
 }
 
 function AgingImages() {
@@ -214,7 +232,7 @@ function AgingImages() {
                 <AgingImagesChart
                     searchFilter={searchFilter}
                     selectedTimeRanges={selectedTimeRanges}
-                    timeRangeCounts={timeRangeCounts}
+                    timeRangeCounts={processTimeRangeCounts(timeRangeCounts, selectedTimeRanges)}
                 />
             )}
         </WidgetCard>
