@@ -30,7 +30,8 @@ function TableCountLinks({ row, textOnly }: TableCountLinksProps): ReactElement 
     } = row;
 
     // TODO: refactor check for vulnerability types in follow-up PR
-    const isImageVuln = vulnerabilityTypes?.includes('IMAGE_CVE');
+    const isImageVuln =
+        vulnerabilityTypes?.includes('IMAGE_CVE') || entityType === entityTypes.IMAGE_COMPONENT;
     const isNodeVuln = entityType === entityTypes.NODE_CVE;
 
     // Only show entity counts on relevant pages. Node count is not currently supported.
@@ -66,14 +67,16 @@ function TableCountLinks({ row, textOnly }: TableCountLinksProps): ReactElement 
             )}
             {/* TODO: strengthen check for COMPONENT context to distinguish check
                 between IMAGE_COMPONENT and NODE_COMPONENT in later PR */}
-            {!isNodeVuln && !entityContext[resourceTypes.COMPONENT] && (
-                <TableCountLink
-                    entityType={resourceTypes.COMPONENT}
-                    count={componentCount}
-                    textOnly={textOnly}
-                    selectedRowId={id}
-                />
-            )}
+            {!isNodeVuln &&
+                !entityContext[resourceTypes.IMAGE_COMPONENT] &&
+                !entityContext[resourceTypes.NODE_COMPONENT] && (
+                    <TableCountLink
+                        entityType={resourceTypes.COMPONENT}
+                        count={componentCount}
+                        textOnly={textOnly}
+                        selectedRowId={id}
+                    />
+                )}
         </div>
     );
 }

@@ -16,7 +16,6 @@ import DateTimeField from 'Components/DateTimeField';
 import LabelChip from 'Components/LabelChip';
 import Menu from 'Components/Menu';
 import TableCountLinks from 'Components/workflow/TableCountLinks';
-import CveType from 'Components/CveType';
 import TopCvssLabel from 'Components/TopCvssLabel';
 import PanelButton from 'Components/PanelButton';
 import WorkflowListPage from 'Containers/Workflow/WorkflowListPage';
@@ -33,8 +32,8 @@ import { cveSortFields } from 'constants/sortFields';
 import { snoozeDurations, durations } from 'constants/timeWindows';
 import {
     VULN_CVE_LIST_FRAGMENT,
-    NODE_CVE_LIST_FRAGMENT,
-    CLUSTER_CVE_LIST_FRAGMENT,
+    VULN_NODE_CVE_LIST_FRAGMENT,
+    VULN_CLUSTER_CVE_LIST_FRAGMENT,
 } from 'Containers/VulnMgmt/VulnMgmt.fragments';
 
 import CVSSSeverityLabel from 'Components/CVSSSeverityLabel';
@@ -71,22 +70,6 @@ export function getCveTableColumns(workflowState) {
             id: cveSortFields.CVE,
             accessor: 'cve',
             sortField: cveSortFields.CVE,
-        },
-        {
-            Header: `Type`,
-            headerClassName: `w-1/10 text-center ${defaultHeaderClassName}`,
-            className: `w-1/10 ${defaultColumnClassName}`,
-            Cell: ({ original }) => {
-                return (
-                    <span className="mx-auto" data-testid="cve-type">
-                        <CveType types={original.vulnerabilityTypes} />
-                    </span>
-                );
-            },
-            id: cveSortFields.CVE_TYPE,
-            accessor: 'vulnerabilityTypes',
-            sortField: cveSortFields.CVE_TYPE,
-            sortable: true,
         },
         {
             Header: `Fixable`,
@@ -286,11 +269,11 @@ const VulnMgmtCves = ({
             cveQuery = gql`
                 query getNodeCves($query: String, $scopeQuery: String, $pagination: Pagination) {
                     results: nodeVulnerabilities(query: $query, pagination: $pagination) {
-                        ...cveFields
+                        ...nodeCVEFields
                     }
                     count: nodeVulnerabilityCount(query: $query)
                 }
-                ${NODE_CVE_LIST_FRAGMENT}
+                ${VULN_NODE_CVE_LIST_FRAGMENT}
             `;
             break;
         }
@@ -298,11 +281,11 @@ const VulnMgmtCves = ({
             cveQuery = gql`
                 query getClusterCves($query: String, $scopeQuery: String, $pagination: Pagination) {
                     results: clusterVulnerabilities(query: $query, pagination: $pagination) {
-                        ...cveFields
+                        ...clusterCVEFields
                     }
                     count: clusterVulnerabilityCount(query: $query)
                 }
-                ${CLUSTER_CVE_LIST_FRAGMENT}
+                ${VULN_CLUSTER_CVE_LIST_FRAGMENT}
             `;
             break;
         }
