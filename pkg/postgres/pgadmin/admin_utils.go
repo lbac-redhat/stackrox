@@ -18,6 +18,7 @@ var (
 )
 
 const (
+	// AdminDB - name of admin database
 	AdminDB = "postgres"
 
 	postgresOpenRetries        = 10
@@ -104,6 +105,8 @@ func CheckIfDBExists(config *pgxpool.Config, dbName string) bool {
 	return exists
 }
 
+// AdminPool - returns a pool to connect to the admin database.
+// This is useful for renaming databases such as a restore to active.
 func AdminPool(config *pgxpool.Config) *pgxpool.Pool {
 	var err error
 	var postgresDB *pgxpool.Pool
