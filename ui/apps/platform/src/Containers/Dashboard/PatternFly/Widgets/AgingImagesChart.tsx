@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Chart, ChartAxis, ChartBar, ChartLabelProps } from '@patternfly/react-charts';
 
 import useResizeObserver from 'hooks/useResizeObserver';
@@ -7,6 +8,7 @@ import {
     defaultChartBarWidth,
     patternflySeverityTheme,
     severityColorScale,
+    navigateOnClickEvent,
 } from 'utils/chartUtils';
 import { getQueryString } from 'utils/queryStringUtils';
 import { LinkableChartLabel } from 'Components/PatternFly/Charts/LinkableChartLabel';
@@ -46,6 +48,7 @@ function AgingImagesChart({
     selectedTimeRanges,
     timeRangeCounts,
 }: AgingImagesChartProps) {
+    const history = useHistory();
     const [widgetContainer, setWidgetContainer] = useState<HTMLDivElement | null>(null);
     const widgetContainerResizeEntry = useResizeObserver(widgetContainer);
 
@@ -104,6 +107,12 @@ function AgingImagesChart({
                             barWidth={defaultChartBarWidth}
                             data={[barData]}
                             style={{ data: { fill } }}
+                            events={[
+                                navigateOnClickEvent(history, (targetProps) => {
+                                    const range = targetProps?.datum?.xName;
+                                    return linkForAgingImages(searchFilter, range);
+                                }),
+                            ]}
                         />
                     );
                 })}
