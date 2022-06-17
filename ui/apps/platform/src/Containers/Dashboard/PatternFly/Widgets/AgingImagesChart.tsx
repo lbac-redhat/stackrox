@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { Chart, ChartAxis, ChartBar } from '@patternfly/react-charts';
+import React, { useCallback, useState } from 'react';
+import { Chart, ChartAxis, ChartBar, ChartLabelProps } from '@patternfly/react-charts';
 
 import useResizeObserver from 'hooks/useResizeObserver';
 import {
@@ -9,17 +8,44 @@ import {
     patternflySeverityTheme,
     severityColorScale,
 } from 'utils/chartUtils';
+import { getQueryString } from 'utils/queryStringUtils';
+import { LinkableChartLabel } from 'Components/PatternFly/Charts/LinkableChartLabel';
+import { SearchFilter } from 'types/search';
+import { vulnManagementImagesPath } from 'routePaths';
+
+function linkForAgingImages(searchFilter: SearchFilter, ageRange: number) {
+    const queryString = getQueryString({
+        s: {
+            ...searchFilter,
+            'Image Created Time': `>${ageRange}d`,
+        },
+        sort: [{ id: 'Image Created Time', desc: 'false' }],
+    });
+    return `${vulnManagementImagesPath}${queryString}`;
+}
 
 export type TimeRangeCounts = Record<`timeRange${0 | 1 | 2 | 3}`, number>;
 export type TimeRangeTuple = [number?, number?, number?, number?];
 
 export type AgingImagesChartProps = {
+    searchFilter: SearchFilter;
     selectedTimeRanges: TimeRangeTuple;
     timeRangeCounts: TimeRangeCounts;
 };
 
-function AgingImagesChart({ selectedTimeRanges, timeRangeCounts }: AgingImagesChartProps) {
-    const history = useHistory();
+const labelLinkCallback = ({ datum }: ChartLabelProps, links: string[]) => {
+    return typeof datum === 'number' ? links[datum - 1] : '';
+};
+
+const labelTextCallback = ({ datum }: ChartLabelProps, text: string[]) => {
+    return typeof datum === 'number' ? text[datum - 1] : '';
+};
+
+function AgingImagesChart({
+    searchFilter,
+    selectedTimeRanges,
+    timeRangeCounts,
+}: AgingImagesChartProps) {
     const [widgetContainer, setWidgetContainer] = useState<HTMLDivElement | null>(null);
     const widgetContainerResizeEntry = useResizeObserver(widgetContainer);
 
@@ -27,15 +53,19 @@ function AgingImagesChart({ selectedTimeRanges, timeRangeCounts }: AgingImagesCh
         x: string;
         y: number;
     }[] = [];
+    const fillColors: string[] = [];
+    const labelLinks: string[] = [];
+    const labelText: string[] = [];
 
     selectedTimeRanges.forEach((range, index) => {
-        if (typeof range === 'undefined') {
-            // TODO Remove color from theme
-        } else {
+        if (typeof range !== 'undefined') {
             data.push({
-                x: `>${range} days`,
+                x: String(range),
                 y: timeRangeCounts[`timeRange${index}`],
             });
+            fillColors.push(severityColorScale[index]);
+            labelLinks.push(linkForAgingImages(searchFilter, range));
+            labelText.push(`>${range ?? 0} days`);
         }
     });
 
@@ -56,18 +86,23 @@ function AgingImagesChart({ selectedTimeRanges, timeRangeCounts }: AgingImagesCh
                 }}
                 theme={patternflySeverityTheme}
             >
-                <ChartAxis label="Image age" />
-                <ChartAxis label="Active (TODO) images" dependentAxis showGrid />
-                {selectedTimeRanges.map((range, index) => {
-                    if (typeof selectedTimeRanges[index] !== 'number') {
-                        return null;
+                <ChartAxis
+                    label="Image age"
+                    tickLabelComponent={
+                        <LinkableChartLabel
+                            linkWith={(props) => labelLinkCallback(props, labelLinks)}
+                            text={(props) => labelTextCallback(props, labelText)}
+                        />
                     }
-                    const fill = severityColorScale[index];
+                />
+                <ChartAxis label="Active (TODO) images" dependentAxis showGrid />
+                {data.map((barData, index) => {
+                    const fill = fillColors[index];
                     return (
                         <ChartBar
                             key={fill}
                             barWidth={defaultChartBarWidth}
-                            data={[data[index]]}
+                            data={[barData]}
                             style={{ data: { fill } }}
                         />
                     );
