@@ -23,8 +23,6 @@ const (
 const (
 	postgresConnectionRetries    = 18
 	postgresConnectRetryInterval = 10 * time.Second
-
-	activeSuffix = "_active"
 )
 
 var (
@@ -35,7 +33,6 @@ var (
 
 // Load loads a Postgres instance and returns a GormDB.
 func Load(conf *config.Config) (*gorm.DB, error) {
-	log.WriteToStderr("SHREWS migrator Load, curious how often it is called.")
 	once.Do(func() {
 		var password []byte
 		password, err = os.ReadFile(dbPasswordFile)

@@ -50,7 +50,7 @@ func DropDB(sourceMap map[string]string, adminConfig *pgxpool.Config, databaseNa
 
 // CreateDB - creates a database from template with the given database name
 func CreateDB(sourceMap map[string]string, adminConfig *pgxpool.Config, dbTemplate, dbName string) error {
-	log.Infof("SHREWS -- CreateDB %s", dbName)
+	log.Debugf("CreateDB %s", dbName)
 	// Set the options for pg_dump from the connection config
 	options := []string{
 		"-T",

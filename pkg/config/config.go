@@ -131,8 +131,6 @@ func readConfig() (*Config, error) {
 		return nil, err
 	}
 
-	log.Infof("SHREWS -- CentralDB config = %q", conf.CentralDB.Source)
-	log.Infof("SHREWS -- CentralDB config = %q", conf.CentralDB.RootDatabaseName)
 	return &conf, nil
 }
 

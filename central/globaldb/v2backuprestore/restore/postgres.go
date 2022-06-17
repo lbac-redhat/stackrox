@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
-	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
@@ -15,15 +14,12 @@ import (
 )
 
 const (
-	// restoreDB - temporary database to apply the postgres dump
+	// restoreSuffix - suffix for the restore database
 	restoreSuffix = "_restore"
 )
 
 var (
 	log = logging.LoggerForModule()
-
-	postgresOpenRetries        = 10
-	postgresTimeBetweenRetries = 10 * time.Second
 )
 
 // LoadRestoreStream a Postgres database from a dump
@@ -35,7 +31,7 @@ func LoadRestoreStream(fileReader io.Reader) error {
 		return errors.Wrap(err, "Could not parse postgres config")
 	}
 
-	// Build the active database name for the connection
+	// Build the restore database name
 	restoreDB := getRestoreDBName()
 
 	// Now recreate the DB

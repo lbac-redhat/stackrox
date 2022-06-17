@@ -73,18 +73,18 @@ func GetPostgres() *pgxpool.Pool {
 			log.Fatalf("Could not parse postgres config: %v", err)
 		}
 
-		// Build the active database name for the connection
+		// Get the active database name for the connection
 		activeDB := pgconfig.GetActiveDB()
 
-		// Create the central database if necessary
+		// Create the active database if necessary
 		if !pgadmin.CheckIfDBExists(dbConfig, activeDB) {
 			err = pgadmin.CreateDB(sourceMap, dbConfig, pgadmin.AdminDB, activeDB)
 			if err != nil {
-				log.Fatalf("Could not create central database: %v", err)
+				log.Fatalf("Could not create the active database: %v", err)
 			}
 		}
 
-		// Set the connection to be the central database.
+		// Set the connection to be the active database.
 		dbConfig.ConnConfig.Database = activeDB
 
 		if err := retry.WithRetry(func() error {
