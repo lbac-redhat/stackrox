@@ -25,7 +25,7 @@ const imageCountQuery = gql`
 function AgingImages() {
     const { searchFilter } = useURLSearch();
     const [selectedTimeRanges, setSelectedTimeRanges] = useState<TimeRangeTuple>([
-        30, 90, 180, 366,
+        30, 90, 180, 365,
     ]);
 
     const variables = Object.fromEntries(
@@ -60,7 +60,11 @@ function AgingImages() {
             }
         >
             {data && (
-                <AgingImagesChart selectedTimeRanges={selectedTimeRanges} timeRangeCounts={data} />
+                <AgingImagesChart
+                    searchFilter={searchFilter}
+                    selectedTimeRanges={selectedTimeRanges}
+                    timeRangeCounts={data}
+                />
             )}
         </WidgetCard>
     );
