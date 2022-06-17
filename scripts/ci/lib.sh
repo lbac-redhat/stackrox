@@ -310,43 +310,34 @@ check_docs() {
     info "Check docs version"
 
     if [[ "$#" -lt 1 ]]; then
-        die "missing arg. usage: check_docs <tag>"
+        die "missing arg. usage: check_docs <full_version>"
     fi
 
-    local tag="$1"
-    local only_run_on_releases="${2:-false}"
+    local full_version="$1"
 
-    [[ "$tag" =~ $RELEASE_RC_TAG_BASH_REGEX ]] || {
+    [[ "$full_version" =~ $RELEASE_RC_TAG_BASH_REGEX ]] || {
         info "Skipping step as this is not a release or RC build"
-        exit 0
+        return
     }
 
-    if [[ "$only_run_on_releases" == "true" ]]; then
-        [[ -z "${BASH_REMATCH[3]}" ]] || {
-            info "Skipping as this is an RC build"
-            exit 0
-        }
-    fi
-
-    local version="${BASH_REMATCH[1]}"
-    local expected_content_branch="rhacs-docs-${version}"
+    local release_version="${BASH_REMATCH[1]}"
+    local expected_content_branch="rhacs-docs-${release_version}"
     local actual_content_branch
     actual_content_branch="$(git config -f .gitmodules submodule.docs/content.branch)"
     [[ "$actual_content_branch" == "$expected_content_branch" ]] || {
-        echo >&2 "Expected docs/content submodule to point to branch ${expected_content_branch}, got: ${actual_content_branch}"
+        echo >&2 "ERROR: Expected docs/content submodule to point to branch ${expected_content_branch}, got: ${actual_content_branch}"
         exit 1
     }
 
     git submodule update --remote docs/content
     git diff --exit-code HEAD || {
-        echo >&2 "The docs/content submodule is out of date for the ${expected_content_branch} branch; please run"
+        echo >&2 "ERROR: The docs/content submodule is out of date for the ${expected_content_branch} branch; please run"
         echo >&2 "  git submodule update --remote docs/content"
         echo >&2 "and commit the result."
         exit 1
     }
 
     info "The docs version is as expected"
-    exit 0
 }
 
 check_scanner_and_collector() {
