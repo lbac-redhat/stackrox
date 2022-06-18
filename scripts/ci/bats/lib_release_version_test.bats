@@ -51,6 +51,18 @@ function setup() {
     assert_failure 1
 }
 
+@test "get_release() gives major.minor I" {
+    run get_release "3.67.2-rc.2"
+    assert_success
+    assert_output "3.67"
+}
+
+@test "get_release() gives major.minor II" {
+    run get_release "3.68.x-23-g8a2e05d0ec"
+    assert_success
+    assert_output "3.68"
+}
+
 # check_scanner_and_collector_versions() tests
 
 function make() {
