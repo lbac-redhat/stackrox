@@ -47,7 +47,7 @@ slack_build_notice() {
     }
 
     local release
-    release="$(get_release)"
+    release="$(get_release "$tag")"
 
     # send to #eng-release
     # local webhook_url="${RELEASE_WORKFLOW_NOTIFY_WEBHOOK}"
