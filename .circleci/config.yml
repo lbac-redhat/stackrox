@@ -816,17 +816,6 @@ commands:
         command: |
           git submodule update --init
 
-  check-scanner-and-collector-release-step:
-    parameters:
-      fail-on-rc:
-        type: boolean
-    steps:
-    - run:
-        name: Check on release builds that COLLECTOR_VERSION and SCANNER_VERSION are release
-        command: |
-          source scripts/ci/lib.sh
-          check_scanner_and_collector "<< parameters.fail-on-rc >>"
-
   setup-go-build-env:
     steps:
       - run:
@@ -971,8 +960,6 @@ commands:
       - checkout-with-submodules
       - poll-for-builds-when-not-in-a-pr-or-nightly-context
       - continue-when-in-a-pr-or-nightly-context
-      - check-scanner-and-collector-release-step:
-          fail-on-rc: false
 
       - setup_remote_docker:
           version: << pipeline.parameters.docker_version >>
@@ -2320,15 +2307,6 @@ jobs:
           make go-postgres-unit-tests
     - post-go-unit-tests:
         path: go-unit-release-junit-reports
-
-  # This serves as a reminder for the release manager to make sure Scanner and Collector versions are set to release.
-  check-scanner-and-collector-release-job:
-    executor: custom
-    resource_class: small
-    steps:
-    - checkout
-    - check-scanner-and-collector-release-step:
-        fail-on-rc: true
 
   check-generated-files-up-to-date:
     executor: custom
@@ -4844,11 +4822,6 @@ workflows:
           context:
             - osd-cluster-manager
             - quay-rhacs-eng-readonly
-
-      - check-scanner-and-collector-release-job:
-          <<: *runOnlyOnReleaseCandidateBuilds
-          context:
-          - custom-executor-pull
 
       - provision-openshift-aro-api-e2e-tests:
           <<: *runOnAllTagsWithQuayIOPullCtx
