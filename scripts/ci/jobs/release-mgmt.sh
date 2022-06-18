@@ -46,7 +46,8 @@ slack_build_notice() {
         return 0
     }
 
-    local release_version="${BASH_REMATCH[1]}"
+    local release
+    release="$(get_release)"
 
     # send to #eng-release
     # local webhook_url="${RELEASE_WORKFLOW_NOTIFY_WEBHOOK}"
@@ -54,9 +55,9 @@ slack_build_notice() {
     local webhook_url="${SLACK_MAIN_WEBHOOK}"
 
     jq -n \
-    --arg release_version "$release_version" \
+    --arg release "$release" \
     --arg tag "$tag" \
-    '{"text": "Prow build for tag `\($tag)` started! Check the status of the build under the following URL: https://prow.ci.openshift.org/?repo=stackrox%2Fstackrox&job=*release-\($release_version).x*"}' \
+    '{"text": "Prow build for tag `\($tag)` started! Check the status of the build under the following URL: https://prow.ci.openshift.org/?repo=stackrox%2Fstackrox&job=*release-\($release).x*"}' \
 | curl -XPOST -d @- -H 'Content-Type: application/json' "$webhook_url"
 }
 
