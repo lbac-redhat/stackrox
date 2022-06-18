@@ -34,6 +34,8 @@ push_images() {
     if is_in_PR_context && [[ "$brand" == "STACKROX_BRANDING" ]]; then
         comment_on_pr
     fi
+
+    touch /tmp/hold
 }
 
 comment_on_pr() {
