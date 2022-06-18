@@ -10,10 +10,15 @@ release_mgmt() {
 
     local release_issues=()
 
-    local full_version
-    full_version="$(make --quiet tag)"
-    if is_RC_version "${full_version}" && ! check_docs "${full_version}"; then
+    local tag
+    tag="$(make --quiet tag)"
+
+    if is_RC_version "${tag}" && ! check_docs "${tag}"; then
         release_issues+=("docs/ is not valid for a release.")
+    fi
+
+    if is_RC_version "${tag}" && ! check_scanner_and_collector_versions; then
+        release_issues+=("SCANNER_VERSION and COLLECTOR_VERSION need to also be release.")
     fi
 
     if [[ "${#release_issues[@]}" != "0" ]]; then

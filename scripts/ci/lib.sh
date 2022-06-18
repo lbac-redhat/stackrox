@@ -310,12 +310,12 @@ check_docs() {
     info "Check docs version"
 
     if [[ "$#" -lt 1 ]]; then
-        die "missing arg. usage: check_docs <full_version>"
+        die "missing arg. usage: check_docs <tag>"
     fi
 
-    local full_version="$1"
+    local tag="$1"
 
-    [[ "$full_version" =~ $RELEASE_RC_TAG_BASH_REGEX ]] || {
+    [[ "$tag" =~ $RELEASE_RC_TAG_BASH_REGEX ]] || {
         info "Skipping step as this is not a release or RC build"
         return 0
     }
@@ -340,20 +340,16 @@ check_docs() {
     info "The docs version is as expected"
 }
 
-check_scanner_and_collector() {
+check_scanner_and_collector_versions() {
     info "Check on builds that COLLECTOR_VERSION and SCANNER_VERSION are release versions"
-
-    if [[ "$#" -ne 1 ]]; then
-        die "missing arg. usage: check_scanner_and_collector"
-    fi
 
     local release_mismatch=0
     if ! is_release_version "$(make --quiet collector-tag)"; then
-        echo >&2 "Collector tag does not look like a release tag. Please update COLLECTOR_VERSION file before releasing."
+        echo >&2 "ERROR: Collector tag does not look like a release tag. Please update COLLECTOR_VERSION file before releasing."
         release_mismatch=1
     fi
     if ! is_release_version "$(make --quiet scanner-tag)"; then
-        echo >&2 "Scanner tag does not look like a release tag. Please update SCANNER_VERSION file before releasing."
+        echo >&2 "ERROR: Scanner tag does not look like a release tag. Please update SCANNER_VERSION file before releasing."
         release_mismatch=1
     fi
 

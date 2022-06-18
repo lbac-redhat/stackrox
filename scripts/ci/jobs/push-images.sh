@@ -17,12 +17,13 @@ push_images() {
 
     [[ "${OPENSHIFT_CI:-false}" == "true" ]] || { die "Only supported in OpenShift CI"; }
 
-    local full_version
-    full_version="$(make --quiet tag)"
-    if is_release_version "$full_version"; then
-        check_docs "${full_version}"
+    local tag
+    tag="$(make --quiet tag)"
+    if is_release_version "$tag"; then
+        check_docs "${tag}"
+        check_scanner_and_collector_versions
     else
-        info "Not checking docs/ checks for non releases"
+        info "Not checking docs/ & version files for non releases"
     fi
 
     local brand="$1"
