@@ -47,12 +47,16 @@ slack_build_notice() {
     }
 
     local release
-    release="$(get_release "$tag")"
+    release="$(get_release_stream "$tag")"
 
-    # send to #eng-release
-    # local webhook_url="${RELEASE_WORKFLOW_NOTIFY_WEBHOOK}"
-    # send to #slack-test until release ready
-    local webhook_url="${SLACK_MAIN_WEBHOOK}"
+    local webhook_url
+    if ! is_release_test_stream; then
+        # send to #eng-release
+        webhook_url="${RELEASE_WORKFLOW_NOTIFY_WEBHOOK}"
+    else
+        # send to #slack-test when testing the release process
+        webhook_url="${SLACK_MAIN_WEBHOOK}"
+    fi
 
     jq -n \
     --arg release "$release" \
