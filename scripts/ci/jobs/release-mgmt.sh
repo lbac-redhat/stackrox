@@ -50,7 +50,7 @@ slack_build_notice() {
     release="$(get_release_stream "$tag")"
 
     local webhook_url
-    if ! is_release_test_stream; then
+    if ! is_release_test_stream "$tag"; then
         # send to #eng-release
         webhook_url="${RELEASE_WORKFLOW_NOTIFY_WEBHOOK}"
     else
