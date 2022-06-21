@@ -72,15 +72,6 @@ function getWidgetTitle(
     return `${totalImages} Aging images`;
 }
 
-function distributeTimeRangeCounts(data: TimeRangeCounts): TimeRangeCounts {
-    return {
-        timeRange0: data.timeRange0 - data.timeRange1,
-        timeRange1: data.timeRange1 - data.timeRange2,
-        timeRange2: data.timeRange2 - data.timeRange3,
-        timeRange3: data.timeRange3,
-    };
-}
-
 const defaultTimeRanges: TimeRangeTuple = [
     { enabled: true, value: 30 },
     { enabled: true, value: 90 },
@@ -217,7 +208,7 @@ function AgingImages() {
                 <AgingImagesChart
                     searchFilter={searchFilter}
                     timeRanges={timeRanges}
-                    timeRangeCounts={distributeTimeRangeCounts(timeRangeCounts)}
+                    timeRangeCounts={timeRangeCounts}
                 />
             )}
         </WidgetCard>

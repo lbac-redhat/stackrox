@@ -7,13 +7,32 @@ import {
     defaultChartHeight,
     defaultChartBarWidth,
     patternflySeverityTheme,
-    severityColorScale,
     navigateOnClickEvent,
+    severityColorScale,
 } from 'utils/chartUtils';
-import { getQueryString } from 'utils/queryStringUtils';
 import { LinkableChartLabel } from 'Components/PatternFly/Charts/LinkableChartLabel';
 import { SearchFilter } from 'types/search';
 import { vulnManagementImagesPath } from 'routePaths';
+import { getQueryString } from 'utils/queryStringUtils';
+
+export type TimeRange = { enabled: boolean; value: number };
+export type TimeRangeTuple = [TimeRange, TimeRange, TimeRange, TimeRange];
+export const timeRangeTupleIndices = [0, 1, 2, 3] as const;
+export type TimeRangeTupleIndex = typeof timeRangeTupleIndices[number];
+export type TimeRangeCounts = Record<`timeRange${TimeRangeTupleIndex}`, number>;
+
+export type ChartData = {
+    barData: { x: string; y: number }[];
+    labelLink: string;
+    labelText: string;
+    fill: string;
+};
+
+export type AgingImagesChartProps = {
+    searchFilter: SearchFilter;
+    timeRanges: TimeRangeTuple;
+    timeRangeCounts: TimeRangeCounts;
+};
 
 function linkForAgingImages(searchFilter: SearchFilter, ageRange: number) {
     const queryString = getQueryString({
@@ -26,61 +45,62 @@ function linkForAgingImages(searchFilter: SearchFilter, ageRange: number) {
     return `${vulnManagementImagesPath}${queryString}`;
 }
 
-export type TimeRange = { enabled: boolean; value: number };
-export type TimeRangeTuple = [TimeRange, TimeRange, TimeRange, TimeRange];
-export const timeRangeTupleIndices = [0, 1, 2, 3] as const;
-export type TimeRangeTupleIndex = typeof timeRangeTupleIndices[number];
-export type TimeRangeCounts = Record<`timeRange${TimeRangeTupleIndex}`, number>;
-
-export type AgingImagesChartProps = {
-    searchFilter: SearchFilter;
-    timeRanges: TimeRangeTuple;
-    timeRangeCounts: TimeRangeCounts;
-};
-
 function yAxisTitle(searchFilter: SearchFilter) {
     const isActiveImages = Boolean(searchFilter.Cluster) || Boolean(searchFilter['Namespace ID']);
 
     return isActiveImages ? 'Active images' : 'All images';
 }
 
-const labelLinkCallback = ({ datum }: ChartLabelProps, links: string[]) => {
-    return typeof datum === 'number' ? links[datum - 1] : '';
+const labelLinkCallback = ({ datum }: ChartLabelProps, chartData: ChartData[]) => {
+    return typeof datum === 'number' ? chartData[datum - 1].labelLink : '';
 };
 
-const labelTextCallback = ({ datum }: ChartLabelProps, text: string[]) => {
-    return typeof datum === 'number' ? text[datum - 1] : '';
+const labelTextCallback = ({ datum }: ChartLabelProps, chartData: ChartData[]) => {
+    return typeof datum === 'number' ? chartData[datum - 1].labelText : '';
 };
+
+function makeChartData(
+    searchFilter: SearchFilter,
+    timeRanges: TimeRangeTuple,
+    data: TimeRangeCounts
+): ChartData[] {
+    const chartData: ChartData[] = [];
+
+    timeRangeTupleIndices.forEach((index) => {
+        const { value, enabled } = timeRanges[index];
+        const nextEnabledRange = timeRanges
+            .slice(index + 1)
+            .find(({ enabled: nextEnabled }) => nextEnabled);
+        const nextEnabledIndex =
+            typeof nextEnabledRange === 'undefined' ? -1 : timeRanges.indexOf(nextEnabledRange);
+
+        if (enabled) {
+            const currentCount = data[`timeRange${index}`];
+            const x = String(value);
+            const y =
+                nextEnabledIndex !== -1
+                    ? currentCount - data[`timeRange${nextEnabledIndex}`]
+                    : currentCount;
+            const barData = [{ x, y }];
+            const fill = severityColorScale[index];
+            const labelLink = linkForAgingImages(searchFilter, value);
+            const labelText =
+                typeof nextEnabledRange === 'undefined'
+                    ? `>${value} days`
+                    : `${value}-${nextEnabledRange.value} days`;
+
+            chartData.push({ barData, fill, labelLink, labelText });
+        }
+    });
+
+    return chartData;
+}
 
 function AgingImagesChart({ searchFilter, timeRanges, timeRangeCounts }: AgingImagesChartProps) {
     const history = useHistory();
     const [widgetContainer, setWidgetContainer] = useState<HTMLDivElement | null>(null);
     const widgetContainerResizeEntry = useResizeObserver(widgetContainer);
-
-    const data: {
-        x: string;
-        y: number;
-    }[] = [];
-    const fillColors: string[] = [];
-    const labelLinks: string[] = [];
-    const labelText: string[] = [];
-
-    // TODO Move this processing up
-    timeRanges.forEach(({ value, enabled }, index) => {
-        if (enabled) {
-            data.push({
-                x: String(value),
-                y: timeRangeCounts[`timeRange${index}`],
-            });
-            fillColors.push(severityColorScale[index]);
-            labelLinks.push(linkForAgingImages(searchFilter, value));
-            if (index === timeRanges.length - 1) {
-                labelText.push(`>${value} days`);
-            } else {
-                labelText.push(`${value}-${timeRanges[index + 1].value} days`);
-            }
-        }
-    });
+    const chartData = makeChartData(searchFilter, timeRanges, timeRangeCounts);
 
     return (
         <div ref={setWidgetContainer}>
@@ -103,8 +123,8 @@ function AgingImagesChart({ searchFilter, timeRanges, timeRangeCounts }: AgingIm
                     label="Image age"
                     tickLabelComponent={
                         <LinkableChartLabel
-                            linkWith={(props) => labelLinkCallback(props, labelLinks)}
-                            text={(props) => labelTextCallback(props, labelText)}
+                            linkWith={(props) => labelLinkCallback(props, chartData)}
+                            text={(props) => labelTextCallback(props, chartData)}
                         />
                     }
                 />
@@ -114,13 +134,12 @@ function AgingImagesChart({ searchFilter, timeRanges, timeRangeCounts }: AgingIm
                     dependentAxis
                     showGrid
                 />
-                {data.map((barData, index) => {
-                    const fill = fillColors[index];
+                {chartData.map(({ barData, fill }) => {
                     return (
                         <ChartBar
                             key={fill}
                             barWidth={defaultChartBarWidth}
-                            data={[barData]}
+                            data={barData}
                             labels={({ datum }) => `${Math.round(parseInt(datum.y, 10))}`}
                             style={{ data: { fill } }}
                             events={[
