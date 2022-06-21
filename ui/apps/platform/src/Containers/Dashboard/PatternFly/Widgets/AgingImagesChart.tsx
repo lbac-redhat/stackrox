@@ -77,7 +77,11 @@ function AgingImagesChart({
             });
             fillColors.push(severityColorScale[index]);
             labelLinks.push(linkForAgingImages(searchFilter, range));
-            labelText.push(`>${range ?? 0} days`);
+            if (index === selectedTimeRanges.length - 1) {
+                labelText.push(`>${range ?? 0} days`);
+            } else {
+                labelText.push(`${range ?? 0}-${selectedTimeRanges[index + 1] ?? 0} days`);
+            }
         }
     });
 
