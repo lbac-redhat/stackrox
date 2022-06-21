@@ -79,7 +79,7 @@ describe('AgingImages dashboard widget', () => {
             </MockedProvider>
         );
 
-        user.click(await screen.findByRole('button', { name: `Options` }));
+        await user.click(await screen.findByRole('button', { name: `Options` }));
         const checkboxes = await screen.findAllByRole('checkbox');
         expect(checkboxes).toHaveLength(4);
 
