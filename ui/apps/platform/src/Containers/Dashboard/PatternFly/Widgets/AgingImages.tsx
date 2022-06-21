@@ -119,22 +119,17 @@ function timeRangeReducer(state: TimeRangeTuple, action: TimeRangeAction) {
     }
 }
 
+const maxTimeRange = 366;
+
 // Tests if a user entered value in the options menu is a valid number and falls within
 // the range of the previous and following time range values in the list.
-function isNumberInRange(
-    value: string,
-    index: TimeRangeTupleIndex,
-    timeRanges: TimeRangeTuple
-): boolean {
-    if (!/^\d+$/.test(value)) {
-        return false;
-    }
-    const newTimeRange = parseInt(value, 10);
+function isNumberInRange(timeRanges: TimeRangeTuple, index: TimeRangeTupleIndex): boolean {
+    const { value } = timeRanges[index];
     const rangeValues = timeRanges.map((r) => r.value);
     const lowerBounds = [0, ...rangeValues.slice(0, 3)];
-    const upperBounds = [...rangeValues.slice(1, 4), Infinity];
+    const upperBounds = [...rangeValues.slice(1, 4), maxTimeRange];
 
-    return newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index];
+    return value > lowerBounds[index] && value < upperBounds[index];
 }
 
 function AgingImages() {
@@ -152,19 +147,23 @@ function AgingImages() {
         dispatch({ type: 'toggle', index });
     }, []);
 
-    const onTimeRangeChange = useCallback(
-        (value: string, index: TimeRangeTupleIndex): void => {
-            if (isNumberInRange(value, index, timeRanges)) {
-                dispatch({ type: 'update', index, value: parseInt(value, 10) });
-            }
-        },
-        [timeRanges]
-    );
+    const onTimeRangeChange = useCallback((value: string, index: TimeRangeTupleIndex): void => {
+        dispatch({ type: 'update', index, value: parseInt(value, 10) });
+    }, []);
+
+    const inputError = timeRangeTupleIndices.some((index) => !isNumberInRange(timeRanges, index))
+        ? new Error('Invalid image ages')
+        : undefined;
 
     return (
         <WidgetCard
             isLoading={loading && !timeRangeCounts}
-            error={error}
+            error={error || inputError}
+            errorTitle={inputError && 'Incorrect image age values'}
+            errorMessage={
+                inputError &&
+                'There was an error retrieving data. Image ages must be in ascending order.'
+            }
             header={
                 <Flex direction={{ default: 'row' }}>
                     <FlexItem grow={{ default: 'grow' }}>
@@ -205,9 +204,19 @@ function AgingImages() {
                                                     <TextInput
                                                         aria-label="Image age in days"
                                                         style={{ minWidth: '100px' }}
-                                                        onChange={(val) =>
-                                                            onTimeRangeChange(val, n)
+                                                        onChange={(val) => {
+                                                            if (
+                                                                !(parseInt(val, 10) >= maxTimeRange)
+                                                            ) {
+                                                                onTimeRangeChange(val, n);
+                                                            }
+                                                        }}
+                                                        validated={
+                                                            isNumberInRange(timeRanges, n)
+                                                                ? ValidatedOptions.default
+                                                                : ValidatedOptions.error
                                                         }
+                                                        max={maxTimeRange}
                                                         type="number"
                                                         value={timeRanges[n].value}
                                                     />
