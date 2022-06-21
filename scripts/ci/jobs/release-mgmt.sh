@@ -13,7 +13,7 @@ release_mgmt() {
 
     slack_build_notice "$tag"
 
-    if is_release_version; then
+    if is_release_version "$tag"; then
         mark_collector_release "$tag"
     fi
 
