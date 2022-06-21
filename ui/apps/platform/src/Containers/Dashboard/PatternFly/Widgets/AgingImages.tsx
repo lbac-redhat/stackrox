@@ -37,16 +37,14 @@ export const imageCountQuery = gql`
     }
 `;
 
-const fieldIdPrefix = 'aging-images';
-
-type QueryVariables = Record<`query${TimeRangeTupleIndex}`, string>;
-
 function queryStringFor(timeRangeValue: number, searchFilter: SearchFilter) {
     return getRequestQueryStringForSearchFilter({
         ...searchFilter,
         'Image Created Time': `>${timeRangeValue}d`,
     });
 }
+
+type QueryVariables = Record<`query${TimeRangeTupleIndex}`, string>;
 
 function getQueryVariables(timeRanges: TimeRangeTuple, searchFilter: SearchFilter): QueryVariables {
     return {
@@ -131,6 +129,8 @@ function isNumberInRange(timeRanges: TimeRangeTuple, index: TimeRangeTupleIndex)
 
     return value > lowerBounds[index] && value < upperBounds[index];
 }
+
+const fieldIdPrefix = 'aging-images';
 
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
