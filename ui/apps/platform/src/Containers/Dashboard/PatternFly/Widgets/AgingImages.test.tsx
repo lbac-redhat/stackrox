@@ -103,7 +103,7 @@ describe('AgingImages dashboard widget', () => {
         // Test display of x-axis
         expect(await screen.findByText(`${range1}-${range2} days`)).toBeInTheDocument();
         expect(await screen.findByText(`${range2}-${range3} days`)).toBeInTheDocument();
-        expect(await screen.findByText(`>${range3} days`)).toBeInTheDocument();
+        expect(await screen.findByText(`>1 year`)).toBeInTheDocument();
 
         await user.click(checkboxes[0]);
         await user.click(checkboxes[2]);
@@ -125,6 +125,6 @@ describe('AgingImages dashboard widget', () => {
         // Test display of x-axis
         expect(await screen.findByText(`${range0}-${range1} days`)).toBeInTheDocument();
         expect(await screen.findByText(`${range1}-${range3} days`)).toBeInTheDocument();
-        expect(await screen.findByText(`>${range3} days`)).toBeInTheDocument();
+        expect(await screen.findByText(`>1 year`)).toBeInTheDocument();
     });
 });
