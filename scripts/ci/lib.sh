@@ -362,6 +362,8 @@ mark_collector_release() {
         die "missing arg. usage: mark_collector_release <tag>"
     fi
 
+    ensure_CI
+
     local tag="$1"
     local username="roxbot"
 
