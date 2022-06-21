@@ -101,7 +101,8 @@ function makeChartData(
             const labelLink = linkForAgingImages(searchFilter, value);
             let labelText: string;
             if (typeof nextEnabledRange === 'undefined') {
-                labelText = value === 365 ? (labelText = `>1 year`) : `>${value} days`;
+                // This is the last time range bucket
+                labelText = value === 365 ? `>1 year` : `>${value} days`;
             } else {
                 labelText = `${value}-${nextEnabledRange.value} days`;
             }
