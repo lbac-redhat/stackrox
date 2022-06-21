@@ -26,14 +26,15 @@ function linkForAgingImages(searchFilter: SearchFilter, ageRange: number) {
     return `${vulnManagementImagesPath}${queryString}`;
 }
 
-export type TimeRangeTuple = [number?, number?, number?, number?];
+export type TimeRange = { enabled: boolean; value: number };
+export type TimeRangeTuple = [TimeRange, TimeRange, TimeRange, TimeRange];
 export const timeRangeTupleIndices = [0, 1, 2, 3] as const;
 export type TimeRangeTupleIndex = typeof timeRangeTupleIndices[number];
 export type TimeRangeCounts = Record<`timeRange${TimeRangeTupleIndex}`, number>;
 
 export type AgingImagesChartProps = {
     searchFilter: SearchFilter;
-    selectedTimeRanges: TimeRangeTuple;
+    timeRanges: TimeRangeTuple;
     timeRangeCounts: TimeRangeCounts;
 };
 
@@ -51,11 +52,7 @@ const labelTextCallback = ({ datum }: ChartLabelProps, text: string[]) => {
     return typeof datum === 'number' ? text[datum - 1] : '';
 };
 
-function AgingImagesChart({
-    searchFilter,
-    selectedTimeRanges,
-    timeRangeCounts,
-}: AgingImagesChartProps) {
+function AgingImagesChart({ searchFilter, timeRanges, timeRangeCounts }: AgingImagesChartProps) {
     const history = useHistory();
     const [widgetContainer, setWidgetContainer] = useState<HTMLDivElement | null>(null);
     const widgetContainerResizeEntry = useResizeObserver(widgetContainer);
@@ -69,18 +66,18 @@ function AgingImagesChart({
     const labelText: string[] = [];
 
     // TODO Move this processing up
-    selectedTimeRanges.forEach((range, index) => {
-        if (typeof range !== 'undefined') {
+    timeRanges.forEach(({ value, enabled }, index) => {
+        if (enabled) {
             data.push({
-                x: String(range),
+                x: String(value),
                 y: timeRangeCounts[`timeRange${index}`],
             });
             fillColors.push(severityColorScale[index]);
-            labelLinks.push(linkForAgingImages(searchFilter, range));
-            if (index === selectedTimeRanges.length - 1) {
-                labelText.push(`>${range ?? 0} days`);
+            labelLinks.push(linkForAgingImages(searchFilter, value));
+            if (index === timeRanges.length - 1) {
+                labelText.push(`>${value} days`);
             } else {
-                labelText.push(`${range ?? 0}-${selectedTimeRanges[index + 1] ?? 0} days`);
+                labelText.push(`${value}-${timeRanges[index + 1].value} days`);
             }
         }
     });
