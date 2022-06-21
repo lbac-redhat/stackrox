@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useReducer, useCallback } from 'react';
 import {
     Flex,
     FlexItem,
@@ -12,6 +12,7 @@ import {
     TextInput,
 } from '@patternfly/react-core';
 import { useQuery, gql } from '@apollo/client';
+import cloneDeep from 'lodash/cloneDeep';
 
 import LinkShim from 'Components/PatternFly/LinkShim';
 import useURLSearch from 'hooks/useURLSearch';
@@ -53,7 +54,7 @@ function getWidgetTitle(
 
     const totalImages =
         Object.values(timeRangeCounts).find((range, index) => {
-            return typeof selectedTimeRanges[index] === 'number';
+            return selectedTimeRanges[index].enabled;
         }) ?? 0;
 
     const isActiveImages = Boolean(searchFilter.Cluster) || Boolean(searchFilter['Namespace ID']);
@@ -71,16 +72,6 @@ function getWidgetTitle(
     return `${totalImages} Aging images`;
 }
 
-function updateAt<T extends TimeRangeTuple>(
-    tuple: T,
-    index: TimeRangeTupleIndex,
-    value: T[number]
-): T {
-    const newTuple: T = [...tuple];
-    newTuple[index] = value;
-    return newTuple;
-}
-
 function distributeTimeRangeCounts(data: TimeRangeCounts): TimeRangeCounts {
     return {
         timeRange0: data.timeRange0 - data.timeRange1,
@@ -90,53 +81,65 @@ function distributeTimeRangeCounts(data: TimeRangeCounts): TimeRangeCounts {
     };
 }
 
+const defaultTimeRanges: TimeRangeTuple = [
+    { enabled: true, value: 30 },
+    { enabled: true, value: 90 },
+    { enabled: true, value: 180 },
+    { enabled: true, value: 365 },
+];
+
+type TimeRangeAction =
+    | {
+          type: 'toggle';
+          index: TimeRangeTupleIndex;
+      }
+    | {
+          type: 'update';
+          index: TimeRangeTupleIndex;
+          value: number;
+      };
+
+function timeRangeReducer(state: TimeRangeTuple, action: TimeRangeAction) {
+    const nextState = cloneDeep(state);
+    switch (action.type) {
+        case 'toggle':
+            nextState[action.index].enabled = !nextState[action.index].enabled;
+            return nextState;
+        case 'update':
+            nextState[action.index].value = action.value;
+            return nextState;
+        default:
+            return nextState;
+    }
+}
+
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
     const { searchFilter } = useURLSearch();
-    const [defaultTimeRanges, setDefaultTimeRanges] = useState<Required<TimeRangeTuple>>([
-        30, 90, 180, 365,
-    ]);
-    const [selectedTimeRanges, setSelectedTimeRanges] = useState<TimeRangeTuple>([
-        ...defaultTimeRanges,
-    ]);
+    const [timeRanges, dispatch] = useReducer(timeRangeReducer, defaultTimeRanges);
 
-    const toggleTimeRange = useCallback(
-        (index) => {
-            const newValue =
-                typeof selectedTimeRanges[index] === 'undefined'
-                    ? defaultTimeRanges[index]
-                    : undefined;
+    const toggleTimeRange = useCallback((index) => {
+        dispatch({ type: 'toggle', index });
+    }, []);
 
-            setSelectedTimeRanges(updateAt(selectedTimeRanges, index, newValue));
-        },
-        [selectedTimeRanges, defaultTimeRanges]
-    );
+    const onTimeRangeChange = useCallback((value: string, index: TimeRangeTupleIndex): void => {
+        if (!/^\d+$/.test(value)) {
+            return;
+        }
+        const newTimeRange = parseInt(value, 10);
+        const lowerBounds = [0, ...defaultTimeRanges.slice(0, 3)];
+        const upperBounds = [...defaultTimeRanges.slice(1, 4), Infinity];
 
-    const onTimeRangeChange = useCallback(
-        (value: string, index: TimeRangeTupleIndex): void => {
-            if (!/^\d+$/.test(value)) {
-                return;
-            }
-            const newTimeRange = parseInt(value, 10);
-
-            const lowerBounds = [0, ...defaultTimeRanges.slice(0, 3)];
-            const upperBounds = [...defaultTimeRanges.slice(1, 4), Infinity];
-
-            if (newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index]) {
-                setDefaultTimeRanges(updateAt(defaultTimeRanges, index, newTimeRange));
-                if (typeof selectedTimeRanges[index] === 'number') {
-                    setSelectedTimeRanges(updateAt(selectedTimeRanges, index, newTimeRange));
-                }
-            }
-        },
-        [defaultTimeRanges, selectedTimeRanges]
-    );
+        if (newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index]) {
+            dispatch({ type: 'update', index, value: newTimeRange });
+        }
+    }, []);
 
     const variables = {};
-    selectedTimeRanges.forEach((range, index) => {
+    timeRanges.forEach(({ value }, index) => {
         variables[`query${index}`] = getRequestQueryStringForSearchFilter({
             ...searchFilter,
-            'Image Created Time': `>${range ?? 0}d`,
+            'Image Created Time': `>${value ?? 0}d`,
         });
     });
 
@@ -154,7 +157,7 @@ function AgingImages() {
                 <Flex direction={{ default: 'row' }}>
                     <FlexItem grow={{ default: 'grow' }}>
                         <Title headingLevel="h2">
-                            {getWidgetTitle(searchFilter, selectedTimeRanges, timeRangeCounts)}
+                            {getWidgetTitle(searchFilter, timeRanges, timeRangeCounts)}
                         </Title>
                     </FlexItem>
                     <FlexItem>
@@ -184,9 +187,7 @@ function AgingImages() {
                                                 id={`${fieldIdPrefix}-time-range-${n}`}
                                                 name={`${fieldIdPrefix}-time-range-${n}`}
                                                 className="pf-u-mb-sm pf-u-display-flex pf-u-align-items-center"
-                                                isChecked={
-                                                    typeof selectedTimeRanges[n] !== 'undefined'
-                                                }
+                                                isChecked={timeRanges[n].enabled}
                                                 onChange={() => toggleTimeRange(n)}
                                                 label={
                                                     <TextInput
@@ -196,7 +197,7 @@ function AgingImages() {
                                                             onTimeRangeChange(val, n)
                                                         }
                                                         type="number"
-                                                        value={defaultTimeRanges[n]}
+                                                        value={timeRanges[n].value}
                                                     />
                                                 }
                                             />
@@ -215,7 +216,7 @@ function AgingImages() {
             {timeRangeCounts && (
                 <AgingImagesChart
                     searchFilter={searchFilter}
-                    selectedTimeRanges={selectedTimeRanges}
+                    timeRanges={timeRanges}
                     timeRangeCounts={distributeTimeRangeCounts(timeRangeCounts)}
                 />
             )}
