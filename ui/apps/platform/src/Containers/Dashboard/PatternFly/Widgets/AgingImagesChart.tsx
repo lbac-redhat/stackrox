@@ -99,10 +99,12 @@ function makeChartData(
             const barData = [{ x, y }];
             const fill = severityColorScale[index];
             const labelLink = linkForAgingImages(searchFilter, value);
-            const labelText =
-                typeof nextEnabledRange === 'undefined'
-                    ? `>${value} days`
-                    : `${value}-${nextEnabledRange.value} days`;
+            let labelText: string;
+            if (typeof nextEnabledRange === 'undefined') {
+                labelText = value === 365 ? (labelText = `>1 year`) : `>${value} days`;
+            } else {
+                labelText = `${value}-${nextEnabledRange.value} days`;
+            }
 
             chartData.push({ barData, fill, labelLink, labelText });
         }
