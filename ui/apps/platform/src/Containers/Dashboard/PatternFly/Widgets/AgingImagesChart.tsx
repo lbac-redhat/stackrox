@@ -59,6 +59,16 @@ const labelTextCallback = ({ datum }: ChartLabelProps, chartData: ChartData[]) =
     return typeof datum === 'number' ? chartData[datum - 1].labelText : '';
 };
 
+/**
+ * Chart data is constructed from a 4-tuple of time range configurations and a data
+ * object that contains image counts for each of the four time ranges.
+ *
+ * Since the incoming data contains overlapping image counts for each time range, we need
+ * to process the data to group into buckets.
+ *
+ * The algorithm:
+ * - Iterating over each time range, starting from the shortest:
+ */
 function makeChartData(
     searchFilter: SearchFilter,
     timeRanges: TimeRangeTuple,
@@ -68,19 +78,15 @@ function makeChartData(
 
     timeRangeTupleIndices.forEach((index) => {
         const { value, enabled } = timeRanges[index];
-        const nextEnabledRange = timeRanges
-            .slice(index + 1)
-            .find(({ enabled: nextEnabled }) => nextEnabled);
-        const nextEnabledIndex =
-            typeof nextEnabledRange === 'undefined' ? -1 : timeRanges.indexOf(nextEnabledRange);
 
         if (enabled) {
-            const currentCount = data[`timeRange${index}`];
+            const nextEnabledRange = timeRanges.slice(index + 1).find((range) => range.enabled);
+            const nextEnabledIndex = timeRanges.findIndex((range) => range === nextEnabledRange);
             const x = String(value);
             const y =
                 nextEnabledIndex !== -1
-                    ? currentCount - data[`timeRange${nextEnabledIndex}`]
-                    : currentCount;
+                    ? data[`timeRange${index}`] - data[`timeRange${nextEnabledIndex}`]
+                    : data[`timeRange${index}`];
             const barData = [{ x, y }];
             const fill = severityColorScale[index];
             const labelLink = linkForAgingImages(searchFilter, value);
