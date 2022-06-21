@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback } from 'react';
+import React, { useReducer } from 'react';
 import {
     Flex,
     FlexItem,
@@ -20,6 +20,8 @@ import useURLSearch from 'hooks/useURLSearch';
 import { getRequestQueryStringForSearchFilter } from 'utils/searchUtils';
 import useSelectToggle from 'hooks/patternfly/useSelectToggle';
 import { SearchFilter } from 'types/search';
+import { vulnManagementImagesPath } from 'routePaths';
+import { getQueryString } from 'utils/queryStringUtils';
 import WidgetCard from './WidgetCard';
 import AgingImagesChart, {
     TimeRangeCounts,
@@ -131,6 +133,10 @@ function isNumberInRange(timeRanges: TimeRangeTuple, index: TimeRangeTupleIndex)
 }
 
 const fieldIdPrefix = 'aging-images';
+const sortByOldestQuery = getQueryString({
+    sort: [{ id: 'Image Created Time', desc: 'false' }],
+});
+const viewAllLink = `${vulnManagementImagesPath}${sortByOldestQuery}`;
 
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
@@ -142,14 +148,6 @@ function AgingImages() {
         variables,
     });
     const timeRangeCounts = data ?? previousData;
-
-    const toggleTimeRange = useCallback((index) => {
-        dispatch({ type: 'toggle', index });
-    }, []);
-
-    const onTimeRangeChange = useCallback((value: string, index: TimeRangeTupleIndex): void => {
-        dispatch({ type: 'update', index, value: parseInt(value, 10) });
-    }, []);
 
     const inputError = timeRangeTupleIndices.some((index) => !isNumberInRange(timeRanges, index))
         ? new Error('Invalid image ages')
@@ -191,34 +189,37 @@ function AgingImages() {
                                     fieldId={`${fieldIdPrefix}-time-range-0`}
                                     label="Image age values"
                                 >
-                                    {timeRangeTupleIndices.map((n) => (
-                                        <div key={n}>
+                                    {timeRangeTupleIndices.map((index) => (
+                                        <div key={index}>
                                             <Checkbox
                                                 aria-label="Toggle image time range"
-                                                id={`${fieldIdPrefix}-time-range-${n}`}
-                                                name={`${fieldIdPrefix}-time-range-${n}`}
+                                                id={`${fieldIdPrefix}-time-range-${index}`}
+                                                name={`${fieldIdPrefix}-time-range-${index}`}
                                                 className="pf-u-mb-sm pf-u-display-flex pf-u-align-items-center"
-                                                isChecked={timeRanges[n].enabled}
-                                                onChange={() => toggleTimeRange(n)}
+                                                isChecked={timeRanges[index].enabled}
+                                                onChange={() => dispatch({ type: 'toggle', index })}
                                                 label={
                                                     <TextInput
                                                         aria-label="Image age in days"
                                                         style={{ minWidth: '100px' }}
                                                         onChange={(val) => {
-                                                            if (
-                                                                !(parseInt(val, 10) >= maxTimeRange)
-                                                            ) {
-                                                                onTimeRangeChange(val, n);
+                                                            const value = parseInt(val, 10);
+                                                            if (!(value >= maxTimeRange)) {
+                                                                dispatch({
+                                                                    type: 'update',
+                                                                    index,
+                                                                    value,
+                                                                });
                                                             }
                                                         }}
                                                         validated={
-                                                            isNumberInRange(timeRanges, n)
+                                                            isNumberInRange(timeRanges, index)
                                                                 ? ValidatedOptions.default
                                                                 : ValidatedOptions.error
                                                         }
                                                         max={maxTimeRange}
                                                         type="number"
-                                                        value={timeRanges[n].value}
+                                                        value={timeRanges[index].value}
                                                     />
                                                 }
                                             />
@@ -227,7 +228,7 @@ function AgingImages() {
                                 </FormGroup>
                             </Form>
                         </Dropdown>
-                        <Button variant="secondary" component={LinkShim} href="TODO">
+                        <Button variant="secondary" component={LinkShim} href={viewAllLink}>
                             View All
                         </Button>
                     </FlexItem>
