@@ -133,10 +133,15 @@ function isNumberInRange(timeRanges: TimeRangeTuple, index: TimeRangeTupleIndex)
 }
 
 const fieldIdPrefix = 'aging-images';
-const sortByOldestQuery = getQueryString({
-    sort: [{ id: 'Image Created Time', desc: 'false' }],
-});
-const viewAllLink = `${vulnManagementImagesPath}${sortByOldestQuery}`;
+// TODO searchFilter
+
+function getViewAllLink(searchFilter: SearchFilter) {
+    const queryString = getQueryString({
+        s: searchFilter,
+        sort: [{ id: 'Image Created Time', desc: 'false' }],
+    });
+    return `${vulnManagementImagesPath}${queryString}`;
+}
 
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
@@ -228,7 +233,11 @@ function AgingImages() {
                                 </FormGroup>
                             </Form>
                         </Dropdown>
-                        <Button variant="secondary" component={LinkShim} href={viewAllLink}>
+                        <Button
+                            variant="secondary"
+                            component={LinkShim}
+                            href={getViewAllLink(searchFilter)}
+                        >
                             View All
                         </Button>
                     </FlexItem>
