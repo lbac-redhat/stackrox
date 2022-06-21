@@ -380,6 +380,7 @@ mark_collector_release() {
     cd /tmp/collector || exit
     gitbot(){
         git -c "user.name=RoxBot" -c "user.email=roxbot@stackrox.com" \
+            -c "url.https://${GITHUB_TOKEN}:x-oauth-basic@github.com/.insteadOf" \
             "${@}"
     }
     gitbot checkout master && gitbot pull
