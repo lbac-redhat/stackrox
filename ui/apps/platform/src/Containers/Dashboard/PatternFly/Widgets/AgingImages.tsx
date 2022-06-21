@@ -28,12 +28,7 @@ import AgingImagesChart, {
 } from './AgingImagesChart';
 
 export const imageCountQuery = gql`
-    query agingImagesQuery(
-        $query0: String = ""
-        $query1: String = ""
-        $query2: String = ""
-        $query3: String = ""
-    ) {
+    query agingImagesQuery($query0: String, $query1: String, $query2: String, $query3: String) {
         timeRange0: imageCount(query: $query0)
         timeRange1: imageCount(query: $query1)
         timeRange2: imageCount(query: $query2)
@@ -43,6 +38,25 @@ export const imageCountQuery = gql`
 
 const fieldIdPrefix = 'aging-images';
 
+type QueryVariables = Record<`query${TimeRangeTupleIndex}`, string>;
+
+function queryStringFor(timeRangeValue: number, searchFilter: SearchFilter) {
+    return getRequestQueryStringForSearchFilter({
+        ...searchFilter,
+        'Image Created Time': `>${timeRangeValue}d`,
+    });
+}
+
+function getQueryVariables(timeRanges: TimeRangeTuple, searchFilter: SearchFilter): QueryVariables {
+    return {
+        query0: queryStringFor(timeRanges[0].value, searchFilter),
+        query1: queryStringFor(timeRanges[1].value, searchFilter),
+        query2: queryStringFor(timeRanges[2].value, searchFilter),
+        query3: queryStringFor(timeRanges[3].value, searchFilter),
+    };
+}
+
+// Gets the header string title for the widget based on applied filters and resulting counts
 function getWidgetTitle(
     searchFilter: SearchFilter,
     selectedTimeRanges: TimeRangeTuple,
@@ -104,41 +118,39 @@ function timeRangeReducer(state: TimeRangeTuple, action: TimeRangeAction) {
     }
 }
 
+// Tests if a user entered value in the options menu is a valid number and falls within
+// the range of the previous and following time range values in the list.
+function isNumberInRange(value: string, index: TimeRangeTupleIndex): boolean {
+    if (!/^\d+$/.test(value)) {
+        return false;
+    }
+    const newTimeRange = parseInt(value, 10);
+    const lowerBounds = [0, ...defaultTimeRanges.slice(0, 3)];
+    const upperBounds = [...defaultTimeRanges.slice(1, 4), Infinity];
+
+    return newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index];
+}
+
 function AgingImages() {
     const { isOpen: isOptionsOpen, onToggle: toggleOptionsOpen } = useSelectToggle();
     const { searchFilter } = useURLSearch();
     const [timeRanges, dispatch] = useReducer(timeRangeReducer, defaultTimeRanges);
+
+    const variables = getQueryVariables(timeRanges, searchFilter);
+    const { data, previousData, loading, error } = useQuery<TimeRangeCounts>(imageCountQuery, {
+        variables,
+    });
+    const timeRangeCounts = data ?? previousData;
 
     const toggleTimeRange = useCallback((index) => {
         dispatch({ type: 'toggle', index });
     }, []);
 
     const onTimeRangeChange = useCallback((value: string, index: TimeRangeTupleIndex): void => {
-        if (!/^\d+$/.test(value)) {
-            return;
-        }
-        const newTimeRange = parseInt(value, 10);
-        const lowerBounds = [0, ...defaultTimeRanges.slice(0, 3)];
-        const upperBounds = [...defaultTimeRanges.slice(1, 4), Infinity];
-
-        if (newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index]) {
-            dispatch({ type: 'update', index, value: newTimeRange });
+        if (isNumberInRange(value, index)) {
+            dispatch({ type: 'update', index, value: parseInt(value, 10) });
         }
     }, []);
-
-    const variables = {};
-    timeRanges.forEach(({ value }, index) => {
-        variables[`query${index}`] = getRequestQueryStringForSearchFilter({
-            ...searchFilter,
-            'Image Created Time': `>${value ?? 0}d`,
-        });
-    });
-
-    const { data, previousData, loading, error } = useQuery<TimeRangeCounts>(imageCountQuery, {
-        variables,
-    });
-
-    const timeRangeCounts = data ?? previousData;
 
     return (
         <WidgetCard
