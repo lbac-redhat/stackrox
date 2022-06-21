@@ -15,6 +15,8 @@ import { SearchFilter } from 'types/search';
 import { vulnManagementImagesPath } from 'routePaths';
 import { getQueryString } from 'utils/queryStringUtils';
 
+// The available time buckets for this widget will always be a set of '4', so we can
+// narrow the types to a tuple here for safer indexing throughout this component.
 export type TimeRange = { enabled: boolean; value: number };
 export type TimeRangeTuple = [TimeRange, TimeRange, TimeRange, TimeRange];
 export const timeRangeTupleIndices = [0, 1, 2, 3] as const;
@@ -51,6 +53,8 @@ function yAxisTitle(searchFilter: SearchFilter) {
     return isActiveImages ? 'Active images' : 'All images';
 }
 
+// `datum` for these callbacks will refer to the index number of the bar in the chart. This index
+// value matches the index of the target `ChartData` item passed to the chart component.
 const labelLinkCallback = ({ datum }: ChartLabelProps, chartData: ChartData[]) => {
     return typeof datum === 'number' ? chartData[datum - 1].labelLink : '';
 };
@@ -67,7 +71,12 @@ const labelTextCallback = ({ datum }: ChartLabelProps, chartData: ChartData[]) =
  * to process the data to group into buckets.
  *
  * The algorithm:
- * - Iterating over each time range, starting from the shortest:
+ * - Iterating over each time range, starting from the shortest.
+ * - If the current time bucket is disabled, skip it.
+ * - Find the next enabled time bucket after the current one
+ * -- If one exists, subtract the count from the current bucket
+ * -- If not, this is the last bucket so leave the count as-is
+ * - Return the again image count, color, text, and link for this bucket
  */
 function makeChartData(
     searchFilter: SearchFilter,
