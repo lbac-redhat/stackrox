@@ -26,7 +26,7 @@ import AgingImagesChart, {
     timeRangeTupleIndices,
 } from './AgingImagesChart';
 
-const imageCountQuery = gql`
+export const imageCountQuery = gql`
     query agingImagesQuery(
         $query0: String = ""
         $query1: String = ""
@@ -81,27 +81,13 @@ function updateAt<T extends TimeRangeTuple>(
     return newTuple;
 }
 
-function processTimeRangeCounts(
-    data: TimeRangeCounts,
-    selectedTimeRanges: TimeRangeTuple
-): TimeRangeCounts {
-    const processedCounts = {
-        timeRange0: 0,
-        timeRange1: 0,
-        timeRange2: 0,
-        timeRange3: 0,
+function distributeTimeRangeCounts(data: TimeRangeCounts): TimeRangeCounts {
+    return {
+        timeRange0: data.timeRange0 - data.timeRange1,
+        timeRange1: data.timeRange1 - data.timeRange2,
+        timeRange2: data.timeRange2 - data.timeRange3,
+        timeRange3: data.timeRange3,
     };
-    let currentTotal = 0;
-    for (let i = timeRangeTupleIndices.length - 1; i >= 0; i -= 1) {
-        const key = `timeRange${i}`;
-        if (typeof selectedTimeRanges[i] === 'number') {
-            processedCounts[key] = data[key];
-            processedCounts[key] -= currentTotal;
-            currentTotal += processedCounts[key];
-        }
-    }
-
-    return processedCounts;
 }
 
 function AgingImages() {
@@ -146,15 +132,13 @@ function AgingImages() {
         [defaultTimeRanges, selectedTimeRanges]
     );
 
-    const variables = Object.fromEntries(
-        selectedTimeRanges.map((range, index) => [
-            `query${index}`,
-            getRequestQueryStringForSearchFilter({
-                ...searchFilter,
-                'Image Created Time': `>${range ?? 0}d`,
-            }),
-        ])
-    );
+    const variables = {};
+    selectedTimeRanges.forEach((range, index) => {
+        variables[`query${index}`] = getRequestQueryStringForSearchFilter({
+            ...searchFilter,
+            'Image Created Time': `>${range ?? 0}d`,
+        });
+    });
 
     const { data, previousData, loading, error } = useQuery<TimeRangeCounts>(imageCountQuery, {
         variables,
@@ -232,7 +216,7 @@ function AgingImages() {
                 <AgingImagesChart
                     searchFilter={searchFilter}
                     selectedTimeRanges={selectedTimeRanges}
-                    timeRangeCounts={processTimeRangeCounts(timeRangeCounts, selectedTimeRanges)}
+                    timeRangeCounts={distributeTimeRangeCounts(timeRangeCounts)}
                 />
             )}
         </WidgetCard>
