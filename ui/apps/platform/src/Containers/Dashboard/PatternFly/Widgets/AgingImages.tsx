@@ -10,6 +10,7 @@ import {
     FormGroup,
     Checkbox,
     TextInput,
+    ValidatedOptions,
 } from '@patternfly/react-core';
 import { useQuery, gql } from '@apollo/client';
 import cloneDeep from 'lodash/cloneDeep';
@@ -120,13 +121,18 @@ function timeRangeReducer(state: TimeRangeTuple, action: TimeRangeAction) {
 
 // Tests if a user entered value in the options menu is a valid number and falls within
 // the range of the previous and following time range values in the list.
-function isNumberInRange(value: string, index: TimeRangeTupleIndex): boolean {
+function isNumberInRange(
+    value: string,
+    index: TimeRangeTupleIndex,
+    timeRanges: TimeRangeTuple
+): boolean {
     if (!/^\d+$/.test(value)) {
         return false;
     }
     const newTimeRange = parseInt(value, 10);
-    const lowerBounds = [0, ...defaultTimeRanges.slice(0, 3)];
-    const upperBounds = [...defaultTimeRanges.slice(1, 4), Infinity];
+    const rangeValues = timeRanges.map((r) => r.value);
+    const lowerBounds = [0, ...rangeValues.slice(0, 3)];
+    const upperBounds = [...rangeValues.slice(1, 4), Infinity];
 
     return newTimeRange > lowerBounds[index] && newTimeRange < upperBounds[index];
 }
@@ -146,11 +152,14 @@ function AgingImages() {
         dispatch({ type: 'toggle', index });
     }, []);
 
-    const onTimeRangeChange = useCallback((value: string, index: TimeRangeTupleIndex): void => {
-        if (isNumberInRange(value, index)) {
-            dispatch({ type: 'update', index, value: parseInt(value, 10) });
-        }
-    }, []);
+    const onTimeRangeChange = useCallback(
+        (value: string, index: TimeRangeTupleIndex): void => {
+            if (isNumberInRange(value, index, timeRanges)) {
+                dispatch({ type: 'update', index, value: parseInt(value, 10) });
+            }
+        },
+        [timeRanges]
+    );
 
     return (
         <WidgetCard
