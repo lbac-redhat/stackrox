@@ -15,6 +15,7 @@ import ScopeBar from './ScopeBar';
 import ViolationsByPolicyCategory from './Widgets/ViolationsByPolicyCategory';
 import DeploymentsAtMostRisk from './Widgets/DeploymentsAtMostRisk';
 import AgingImages from './Widgets/AgingImages';
+import ViolationsByPolicySeverity from './Widgets/ViolationsByPolicySeverity';
 
 function DashboardPage() {
     return (
@@ -43,6 +44,9 @@ function DashboardPage() {
             <Divider component="div" />
             <PageSection>
                 <Grid hasGutter style={{ gridAutoRows: 'max-content' }}>
+                    <GridItem lg={6}>
+                        <ViolationsByPolicySeverity />
+                    </GridItem>
                     <GridItem lg={6}>
                         <DeploymentsAtMostRisk />
                     </GridItem>
