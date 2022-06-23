@@ -388,7 +388,40 @@ check_scanner_and_collector_versions() {
 }
 
 push_release() {
-    info "Pushing some release artifacts"
+    info "Push release artifacts"
+
+    if [[ "$#" -ne 1 ]]; then
+        die "missing arg. usage: push_release <tag>"
+    fi
+
+    local tag="$1"
+
+    info "Push roxctl to gs://sr-roxc & gs://rhacs-openshift-mirror-src/assets"
+
+    setup_gcp
+
+    local temp_dir
+    temp_dir="$(mktemp -d)"
+    "${SCRIPTS_ROOT}/scripts/ci/roxctl-publish/prepare.sh" . "${temp_dir}"
+    "${SCRIPTS_ROOT}/scripts/ci/roxctl-publish/publish.sh" "${temp_dir}" "${tag}" "gs://sr-roxc"
+    "${SCRIPTS_ROOT}/scripts/ci/roxctl-publish/publish.sh" "${temp_dir}" "${tag}" "gs://rhacs-openshift-mirror-src/assets"
+
+    info "Publish Helm charts to github repository stackrox/release-artifacts and create a PR"
+
+    local central_services_chart_dir
+    local secured_cluster_services_chart_dir
+    local roxctl
+
+    central_services_chart_dir="$(mktemp -d)"
+    secured_cluster_services_chart_dir="$(mktemp -d)"
+    roxctl="./bin/$(uname | tr A-Z a-z)/roxctl"
+    "$roxctl" helm output central-services --image-defaults=stackrox.io --output-dir "${central_services_chart_dir}/stackrox"
+    "$roxctl" helm output central-services --image-defaults=rhacs --output-dir "${central_services_chart_dir}/rhacs"
+    "$roxctl" helm output central-services --image-defaults=opensource --output-dir "${central_services_chart_dir}/opensource"
+    "$roxctl" helm output secured-cluster-services --image-defaults=stackrox.io --output-dir "${secured_cluster_services_chart_dir}/stackrox"
+    "$roxctl" helm output secured-cluster-services --image-defaults=rhacs --output-dir "${secured_cluster_services_chart_dir}/rhacs"
+    "$roxctl" helm output secured-cluster-services --image-defaults=opensource --output-dir "${secured_cluster_services_chart_dir}/opensource"
+    "${SCRIPTS_ROOT}/scripts/ci/publish-helm-charts" "$(make --quiet tag)" "${central_services_chart_dir}" "${secured_cluster_services_chart_dir}"
 }
 
 mark_collector_release() {
