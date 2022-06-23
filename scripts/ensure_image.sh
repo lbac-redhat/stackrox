@@ -41,7 +41,7 @@ if [[ -n "${CI}" ]]; then
     docker tag ${image} ${quay_image}
     docker push ${quay_image} | cat
   elif [[ $image == quay* ]]; then
-    docker_image="docker.io/stackrox/${image#quay.io/rhacs-eng/}"
+    docker_image="quay.io/stackrox-io/${image#quay.io/rhacs-eng/}"
     docker tag ${image} ${docker_image}
     docker push ${docker_image} | cat
   fi

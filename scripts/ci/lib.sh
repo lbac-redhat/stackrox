@@ -160,7 +160,7 @@ push_main_image_set() {
     if [[ "$brand" == "STACKROX_BRANDING" ]]; then
         local destination_registries=("quay.io/stackrox-io")
     elif [[ "$brand" == "RHACS_BRANDING" ]]; then
-        local destination_registries=("docker.io/stackrox" "quay.io/rhacs-eng")
+        local destination_registries=("quay.io/rhacs-eng")
     else
         die "$brand is not a supported brand"
     fi
@@ -198,7 +198,7 @@ push_docs_image() {
     local docs_tag
     docs_tag="$(make --quiet docs-tag)"
 
-    local registries=("docker.io/stackrox" "quay.io/rhacs-eng" "quay.io/stackrox-io")
+    local registries=("quay.io/rhacs-eng" "quay.io/stackrox-io")
 
     for registry in "${registries[@]}"; do
         registry_rw_login "$registry"
@@ -214,9 +214,6 @@ registry_rw_login() {
     local registry="$1"
 
     case "$registry" in
-        docker.io/stackrox)        
-            docker login -u "$DOCKER_IO_PUSH_USERNAME" --password-stdin <<<"$DOCKER_IO_PUSH_PASSWORD" docker.io
-            ;;
         quay.io/rhacs-eng)
             docker login -u "$QUAY_RHACS_ENG_RW_USERNAME" --password-stdin <<<"$QUAY_RHACS_ENG_RW_PASSWORD" quay.io
             ;;
@@ -245,7 +242,7 @@ registry_ro_login() {
 }
 
 push_matching_collector_scanner_images() {
-    info "Pushing collector & scanner images tagged with main-version to docker.io/stackrox and quay.io/rhacs-eng"
+    info "Pushing collector & scanner images tagged with main-version to quay.io/rhacs-eng"
 
     if [[ "$#" -ne 1 ]]; then
         die "missing arg. usage: push_matching_collector_scanner_images <brand>"
@@ -262,7 +259,7 @@ push_matching_collector_scanner_images() {
         local target_registries=( "quay.io/stackrox-io" )
     elif [[ "$brand" == "RHACS_BRANDING" ]]; then
         local source_registry="quay.io/rhacs-eng"
-        local target_registries=( "quay.io/rhacs-eng" "docker.io/stackrox" )
+        local target_registries=( "quay.io/rhacs-eng" )
     else
         die "$brand is not a supported brand"
     fi

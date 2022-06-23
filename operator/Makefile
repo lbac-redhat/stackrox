@@ -34,7 +34,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # IMAGE_REPO is the repository (server and namespace) into which the operator images will get pushed.
-IMAGE_REPO ?= docker.io/stackrox
+IMAGE_REPO ?= quay.io/stackrox-io
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 # This variable is used to construct full image tags for bundle and catalog images.
 IMAGE_TAG_BASE ?= $(IMAGE_REPO)/stackrox-operator
@@ -354,7 +354,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 # Likewise, we hardcode the image reference to docker.io/stackrox/stackrox-operator. If this is overridden via
 # the IMG_REPO environment variable, the final reference will be injected in the bundle-post-process step.
 	$(OPERATOR_SDK) generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=docker.io/stackrox/stackrox-operator:0.0.1
+	cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/stackrox-io/stackrox-operator:0.0.1
 	cd config/scorecard-versioned && $(KUSTOMIZE) edit set image scorecard-test=quay.io/operator-framework/scorecard-test:v$(OPERATOR_SDK_VERSION)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version 0.0.1 $(BUNDLE_METADATA_OPTS)
 # Delete lines that copy the original bundle files in bundle.Dockerfile (we can't just use `rm` in scratch image).
