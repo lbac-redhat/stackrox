@@ -40,7 +40,6 @@ push_images() {
 
     push_main_image_set "$push_context" "$brand"
     push_matching_collector_scanner_images "$brand"
-    # TODO(RS-509) - remove this check after the openshift/release master CI PR merges
     if [[ -n "${PIPELINE_DOCS_IMAGE:-}" ]]; then
         push_docs_image
     fi

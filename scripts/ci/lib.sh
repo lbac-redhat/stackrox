@@ -387,6 +387,10 @@ check_scanner_and_collector_versions() {
     info "The scanner and collector versions are release versions"
 }
 
+push_release() {
+    info "Pushing some release artifacts"
+}
+
 mark_collector_release() {
     info "Create a PR for collector to add this release to its RELEASED_VERSIONS file"
 
