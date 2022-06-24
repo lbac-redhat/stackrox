@@ -64,7 +64,7 @@ func TestSearchFuncs(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	s := NewBuilder().
+	builder := NewBuilder().
 		WithAlertStore(alertMocks.NewMockDataStore(mockCtrl)).
 		WithDeploymentStore(deploymentMocks.NewMockDataStore(mockCtrl)).
 		WithImageStore(imageMocks.NewMockDataStore(mockCtrl)).
@@ -77,9 +77,13 @@ func TestSearchFuncs(t *testing.T) {
 		WithRoleStore(roleMocks.NewMockDataStore(mockCtrl)).
 		WithRoleBindingStore(roleBindingsMocks.NewMockDataStore(mockCtrl)).
 		WithClusterDataStore(clusterDataStoreMocks.NewMockDataStore(mockCtrl)).
-		WithCategoryDataStore(categoryDataStoreMocks.NewMockDataStore(mockCtrl)).
-		WithAggregator(nil).
-		Build()
+		WithAggregator(nil)
+
+	if features.NewPolicyCategories.Enabled() {
+		builder = builder.WithCategoryDataStore(categoryDataStoreMocks.NewMockDataStore(mockCtrl))
+	}
+
+	s := builder.Build()
 
 	searchFuncMap := s.(*serviceImpl).getSearchFuncs()
 	for _, searchCategory := range GetAllSearchableCategories() {
@@ -159,7 +163,7 @@ func (s *SearchOperationsTestSuite) TestAutocomplete() {
 	indexingQ.PushSignal(&finishedIndexing)
 	finishedIndexing.Wait()
 
-	service := NewBuilder().
+	builder := NewBuilder().
 		WithAlertStore(alertMocks.NewMockDataStore(s.mockCtrl)).
 		WithDeploymentStore(deploymentDS).
 		WithImageStore(imageMocks.NewMockDataStore(s.mockCtrl)).
@@ -172,8 +176,13 @@ func (s *SearchOperationsTestSuite) TestAutocomplete() {
 		WithRoleStore(roleMocks.NewMockDataStore(s.mockCtrl)).
 		WithRoleBindingStore(roleBindingsMocks.NewMockDataStore(s.mockCtrl)).
 		WithClusterDataStore(clusterDataStoreMocks.NewMockDataStore(s.mockCtrl)).
-		WithAggregator(nil).
-		Build().(*serviceImpl)
+		WithAggregator(nil)
+
+	if features.NewPolicyCategories.Enabled() {
+		builder = builder.WithCategoryDataStore(categoryDataStoreMocks.NewMockDataStore(s.mockCtrl))
+	}
+
+	service := builder.Build().(*serviceImpl)
 
 	for _, testCase := range []struct {
 		query           string
@@ -238,7 +247,7 @@ func (s *SearchOperationsTestSuite) TestAutocompleteForEnums() {
 	policySearcher := policySearcher.New(policyStore, policyIndexer)
 	ds := policyDatastore.New(policyStore, policyIndexer, policySearcher, nil, nil)
 
-	service := NewBuilder().
+	builder := NewBuilder().
 		WithAlertStore(alertMocks.NewMockDataStore(s.mockCtrl)).
 		WithDeploymentStore(deploymentMocks.NewMockDataStore(s.mockCtrl)).
 		WithImageStore(imageMocks.NewMockDataStore(s.mockCtrl)).
@@ -250,8 +259,12 @@ func (s *SearchOperationsTestSuite) TestAutocompleteForEnums() {
 		WithRoleStore(roleMocks.NewMockDataStore(s.mockCtrl)).
 		WithRoleBindingStore(roleBindingsMocks.NewMockDataStore(s.mockCtrl)).
 		WithClusterDataStore(clusterDataStoreMocks.NewMockDataStore(s.mockCtrl)).
-		WithAggregator(nil).
-		Build().(*serviceImpl)
+		WithAggregator(nil)
+
+	if features.NewPolicyCategories.Enabled() {
+		builder = builder.WithCategoryDataStore(categoryDataStoreMocks.NewMockDataStore(s.mockCtrl))
+	}
+	service := builder.Build().(*serviceImpl)
 
 	results, err := service.autocomplete(ctx, fmt.Sprintf("%s:", search.Severity), []v1.SearchCategory{v1.SearchCategory_POLICIES})
 	s.NoError(err)
